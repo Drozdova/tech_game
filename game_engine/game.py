@@ -1,5 +1,5 @@
 """Base Game interface."""
-
+import json
 
 class QuestionInfo:
     title: str
@@ -7,7 +7,7 @@ class QuestionInfo:
 
 class Game:
     """Base class for game logic. All game methods should be synchronous."""
-    
+
     def list_teams(self) -> list[str]: 
         """List all teams in the game."""
         raise NotImplementedError()
@@ -20,8 +20,20 @@ class Game:
         """Get the score for a team."""
         raise NotImplementedError()
       
-    def list_questions(self) -> list[str]: 
-        raise NotImplementedError()
+    def load_questions(self):
+        """Load questions from the folder."""
+        self.questions_variants = []
+        for i in range(100, 1000, 100):
+            with open(f'C:\\Users\\eva95\\PycharmProjects\\VS_projects\\tech-game\\game_engine\\resources\\game_questions\\{i}.json', encoding="utf-8") as file:
+                data = json.load(file)
+                data['price'] = i
+                self.questions_variants.append(data)
+
+    def list_questions(self) -> list[str]:
+        self.question_list = []
+        for i in self.questions_variants:
+            self.question_list.append(i['title'])
+        return self.question_list
     
     def get_variants_for_question(self, question_index: int) -> list[str]:
         """Get the variants for a question."""
