@@ -1,0 +1,19 @@
+{
+  "folders": [
+    {
+      "name": "Backend (Python)",
+      "path": "game_engine"
+    },
+    {
+      "name": "Frontend (TypeScript)",
+      "path": "web_ui"
+    }
+  ],
+  "settings": {
+    "npm.autoDetect": "on",
+    "npm.packageManager": "npm",
+    "liveServer.settings.multiRootWorkspaceName": "Frontend (TypeScript)"
+  }
+}
+
+

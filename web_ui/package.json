@@ -1,0 +1,17 @@
+{
+  "name": "tech-game-ui",
+  "version": "1.0.0",
+  "description": "Web UI for tech game",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "serve": "npx browser-sync start --config bs-config.js",
+    "dev": "concurrently --kill-others \"npm run watch\" \"npm run serve\"",
+    "kill": "powershell -ExecutionPolicy Bypass -File ./kill-dev-servers.ps1"
+  },
+  "devDependencies": {
+    "browser-sync": "^3.0.2",
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  }
+}
