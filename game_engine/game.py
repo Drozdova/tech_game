@@ -24,19 +24,20 @@ class Game:
         """Load questions from the folder."""
         self.questions_variants = []
         for i in range(100, 1000, 100):
-            with open(f'C:\\Users\\eva95\\PycharmProjects\\VS_projects\\tech-game\\game_engine\\resources\\game_questions\\{i}.json', encoding="utf-8") as file:
+            with open(f'game_engine/resources/game_questions/{i}.json', encoding="utf-8") as file:
                 data = json.load(file)
                 data['price'] = i
                 self.questions_variants.append(data)
 
     def list_questions(self) -> list[str]:
-        self.question_list = [x['title'] for x in self.questions_variants] 
+        self.question_list = [q['title'] for q in self.questions_variants] 
         return self.question_list
     
     def get_variants_for_question(self, question_index: int) -> list[str]:
         """Get the variants for a question."""
-        raise NotImplementedError()
-    
+        return self.questions_variants[question_index]['variants']
+
+
     def submit_answer(self, question_id, answer: str) -> bool: 
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
         raise NotImplementedError()

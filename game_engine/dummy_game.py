@@ -54,13 +54,13 @@ class DummyGame(Game):
     
     def get_variants_for_question(self, question_index: int) -> list[str]:
         return try_super_or(
-            lambda: super().get_variants_for_question(question_index),
+            lambda: super(DummyGame, self).get_variants_for_question(question_index),
             lambda: [f'Q{question_index}: Variant {i}' for i in range(4)]
         )
     
     def submit_answer(self, question_id, answer: str) -> bool:
         return try_super_or(
-            lambda: super().submit_answer(question_id, answer),
+            lambda: super(DummyGame, self).submit_answer(question_id, answer),
             lambda: random.choice([True, False])
         )
 
