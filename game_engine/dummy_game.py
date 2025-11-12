@@ -20,35 +20,29 @@ class DummyGame(Game):
     
     def __init__(self):
         """Initialize the game with default state."""
-        self.current_team: str | None = None
-        # Load questions from files
-        try:
-            self.load_questions()
-        except Exception as e:
-            print(f"Warning: Could not load questions: {e}")
-            self.questions_variants = []
-    
+        super().__init__()
+        
     def list_teams(self) -> list[str]:
         return try_super_or(
-            super().list_teams,
+            super(DummyGame, self).list_teams,
             lambda: ["Команда А", "Команда Б", "Команда В"]
         )
 
     def set_current_team(self, team_name: str) -> None:
         try_super_or(
-            lambda: super().set_current_team(team_name),
+            lambda: super(DummyGame, self).set_current_team(team_name),
             lambda: setattr(self, 'current_team', team_name)
         )
     
     def get_team_score(self, team_name: str) -> int:
         return try_super_or(
-            lambda: super().get_team_score(team_name),
+            lambda: super(DummyGame, self).get_team_score(team_name),
             lambda: random.randint(0, 100)
         )
     
     def list_questions(self) -> list[str]:
         return try_super_or(
-            super().list_questions,
+            super(DummyGame, self).list_questions,
             lambda: [f'Question {i}' for i in range(9)]
         )
     
