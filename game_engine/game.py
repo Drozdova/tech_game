@@ -30,9 +30,7 @@ class Game:
                 self.questions_variants.append(data)
 
     def list_questions(self) -> list[str]:
-        self.question_list = []
-        for i in self.questions_variants:
-            self.question_list.append(i['title'])
+        self.question_list = [x['title'] for x in self.questions_variants] 
         return self.question_list
     
     def get_variants_for_question(self, question_index: int) -> list[str]:
@@ -42,5 +40,4 @@ class Game:
     def submit_answer(self, question_id, answer: str) -> bool: 
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
         raise NotImplementedError()
-    
 
