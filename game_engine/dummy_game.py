@@ -21,6 +21,12 @@ class DummyGame(Game):
     def __init__(self):
         """Initialize the game with default state."""
         self.current_team: str | None = None
+        # Load questions from files
+        try:
+            self.load_questions()
+        except Exception as e:
+            print(f"Warning: Could not load questions: {e}")
+            self.questions_variants = []
     
     def list_teams(self) -> list[str]:
         return try_super_or(
