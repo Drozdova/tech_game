@@ -10,6 +10,7 @@ class QuestionInfo:
 
 class Game:
     """Base class for game logic. All game methods should be synchronous."""
+    topic_name = 'Окружающий мир'
 
     def __init__(self) -> None:
         self._load_data()
@@ -43,7 +44,7 @@ class Game:
         self.file_data = []
         for i in range(100, 1000, 100):
             with open(
-                f"game_engine/resources/game_questions/{i}.json", encoding="utf-8"
+                f"game_engine/resources/game_questions/{self.topic_name}/{i}.json", encoding="utf-8"
             ) as file:
                 data = json.load(file)
                 data["price"] = i
