@@ -17,11 +17,12 @@ class Game:
 
     def list_teams(self) -> list[str]:
         """List all teams in the game."""
-        raise NotImplementedError()
+        lst_teams = input('Введите имена команд через запятую: ').split(',')
+        return lst_teams
 
     def set_current_team(self, team_name: str) -> None:
         """Set the current team for the game."""
-        raise NotImplementedError()
+        self.current_team = team_name
 
     def get_team_score(self, team_name: str) -> int:
         """Get the score for a team."""
