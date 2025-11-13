@@ -75,11 +75,29 @@ export class QuestionBoard {
       // Create button for each team
       const teams = result as string[];
       teams.forEach((teamName) => {
+        // Create team item container
+        const teamItem = document.createElement('div');
+        teamItem.className = 'team-item';
+
+        // Create button
         const button = document.createElement('button');
         button.className = 'team-button';
         button.textContent = teamName;
         button.onclick = () => this.onTeamSelect(teamName, button);
-        buttonsContainer.appendChild(button);
+
+        // Create score display
+        const scoreDisplay = document.createElement('span');
+        scoreDisplay.className = 'team-score';
+        scoreDisplay.dataset.team = teamName;
+        scoreDisplay.textContent = '0 очков';
+
+        // Add button and score to team item
+        teamItem.appendChild(button);
+        teamItem.appendChild(scoreDisplay);
+        buttonsContainer.appendChild(teamItem);
+
+        // Load initial score
+        this.updateTeamScore(teamName);
       });
 
       this.teamsContainer.appendChild(buttonsContainer);
@@ -244,6 +262,10 @@ export class QuestionBoard {
             const isCorrect = result as boolean;
             if (isCorrect) {
                 button.classList.add('correct');
+                // Update score for selected team
+                if (this.selectedTeam) {
+                    this.updateTeamScore(this.selectedTeam);
+                }
                 setTimeout(() => {
                     alert('Правильно! 🎉');
                     this.variantsContainer.style.display = 'none';
@@ -259,6 +281,27 @@ export class QuestionBoard {
                     });
                     button.classList.remove('incorrect');
                 }, 500);
+            }
+        });
+    }
+
+    /**
+     * Update team score display
+     */
+    private updateTeamScore(teamName: string): void {
+        GameEngine.call('get_team_score', [teamName], (result, error) => {
+            if (error) {
+                console.error(`Failed to get score for ${teamName}:`, error);
+                return;
+            }
+
+            const score = result as number;
+            const scoreDisplay = this.teamsContainer.querySelector(
+                `.team-score[data-team="${teamName}"]`
+            ) as HTMLElement;
+
+            if (scoreDisplay) {
+                scoreDisplay.textContent = `${score} очков`;
             }
         });
     }
