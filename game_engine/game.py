@@ -27,9 +27,12 @@ class Game:
         """Get the score for a team."""
         raise NotImplementedError()
 
-    def list_questions(self) -> list[str]:
-        self.question_list = [q["title"] for q in self.file_data]
-        return self.question_list
+    def list_questions_and_prices(self) -> list[dict]:
+        self.question_and_prices_list = []
+        question_and_prices_dict = [
+            {k: d[k] for k in ("title", "price")} for d in self.file_data
+        ]
+        return question_and_prices_dict
 
     def get_variants_for_question(self, question_index: int) -> list[str]:
         """Get the variants for a question."""
@@ -44,7 +47,8 @@ class Game:
         self.file_data = []
         for i in range(100, 1000, 100):
             with open(
-                f"game_engine/resources/game_questions/{self.topic_name}/{i}.json", encoding="utf-8"
+                f"game_engine/resources/game_questions/{self.topic_name}/{i}.json",
+                encoding="utf-8",
             ) as file:
                 data = json.load(file)
                 data["price"] = i

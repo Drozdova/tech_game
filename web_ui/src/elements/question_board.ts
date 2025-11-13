@@ -120,7 +120,7 @@ export class QuestionBoard {
   private loadQuestions(): void {
         this.questionsContainer.innerHTML = '<div class="loading-text">Загрузка вопросов...</div>';
 
-        GameEngine.call('list_questions', [], (result, error) => {
+        GameEngine.call('list_questions_and_prices', [], (result, error) => {
             if (error) {
                 this.questionsContainer.innerHTML = `<div class="error-text">Ошибка: ${error}</div>`;
                 return;
@@ -130,9 +130,13 @@ export class QuestionBoard {
             this.questionsContainer.innerHTML = '';
 
             // Create card for each question
-            const questions = result as string[];
-            questions.forEach((questionTitle, index) => {
-                this.createQuestionCard(questionTitle, index);
+            interface QuestionInfo {
+                title: string;
+                price: number;
+            }
+            const questions = result as QuestionInfo[];
+            questions.forEach((question, index) => {
+                this.createQuestionCard(question.title, question.price, index);
             });
         });
     }
@@ -140,7 +144,7 @@ export class QuestionBoard {
     /**
      * Create a question card
      */
-    private createQuestionCard(title: string, index: number): void {
+    private createQuestionCard(title: string, price: number, index: number): void {
         const template = TemplateManager.getTemplate('question_card');
         if (!template) {
             console.error('Failed to load question_card template');
@@ -153,8 +157,8 @@ export class QuestionBoard {
 
         if (titleEl && pointsEl) {
             titleEl.textContent = title;
-            // For now, use dummy points - could be extended to get from server
-            pointsEl.textContent = `${(index % 5 + 1) * 10} баллов`;
+            // Use actual price from server
+            pointsEl.textContent = `${price} баллов`;
         }
 
         // Add click handler
