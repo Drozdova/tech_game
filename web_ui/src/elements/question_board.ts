@@ -15,6 +15,7 @@ export class QuestionBoard {
   private questionsContainer: HTMLElement;
   private variantsContainer: HTMLElement;
   private selectedQuestionIndex: number | null = null;
+  private selectedQuestionPrice: number | null = null;
   private selectedTeam: string | null = null;
 
   constructor() {
@@ -75,11 +76,29 @@ export class QuestionBoard {
       // Create button for each team
       const teams = result as string[];
       teams.forEach((teamName) => {
+        // Create team item container
+        const teamItem = document.createElement('div');
+        teamItem.className = 'team-item';
+
+        // Create button
         const button = document.createElement('button');
         button.className = 'team-button';
         button.textContent = teamName;
         button.onclick = () => this.onTeamSelect(teamName, button);
-        buttonsContainer.appendChild(button);
+
+        // Create score display
+        const scoreDisplay = document.createElement('span');
+        scoreDisplay.className = 'team-score';
+        scoreDisplay.dataset.team = teamName;
+        scoreDisplay.textContent = '0 очков';
+
+        // Add button and score to team item
+        teamItem.appendChild(button);
+        teamItem.appendChild(scoreDisplay);
+        buttonsContainer.appendChild(teamItem);
+
+        // Load initial score
+        this.updateTeamScore(teamName);
       });
 
       this.teamsContainer.appendChild(buttonsContainer);
@@ -120,7 +139,7 @@ export class QuestionBoard {
   private loadQuestions(): void {
         this.questionsContainer.innerHTML = '<div class="loading-text">Загрузка вопросов...</div>';
 
-        GameEngine.call('list_questions', [], (result, error) => {
+        GameEngine.call('list_questions_and_prices', [], (result, error) => {
             if (error) {
                 this.questionsContainer.innerHTML = `<div class="error-text">Ошибка: ${error}</div>`;
                 return;
@@ -130,9 +149,13 @@ export class QuestionBoard {
             this.questionsContainer.innerHTML = '';
 
             // Create card for each question
-            const questions = result as string[];
-            questions.forEach((questionTitle, index) => {
-                this.createQuestionCard(questionTitle, index);
+            interface QuestionInfo {
+                title: string;
+                price: number;
+            }
+            const questions = result as QuestionInfo[];
+            questions.forEach((question, index) => {
+                this.createQuestionCard(question.title, question.price, index);
             });
         });
     }
@@ -140,7 +163,7 @@ export class QuestionBoard {
     /**
      * Create a question card
      */
-    private createQuestionCard(title: string, index: number): void {
+    private createQuestionCard(title: string, price: number, index: number): void {
         const template = TemplateManager.getTemplate('question_card');
         if (!template) {
             console.error('Failed to load question_card template');
@@ -153,12 +176,12 @@ export class QuestionBoard {
 
         if (titleEl && pointsEl) {
             titleEl.textContent = title;
-            // For now, use dummy points - could be extended to get from server
-            pointsEl.textContent = `${(index % 5 + 1) * 10} баллов`;
+            // Use actual price from server
+            pointsEl.textContent = `${price} баллов`;
         }
 
         // Add click handler
-        template.onclick = () => this.onQuestionClick(index);
+        template.onclick = () => this.onQuestionClick(index, price);
 
         // Add to container
         this.questionsContainer.appendChild(template);
@@ -167,8 +190,9 @@ export class QuestionBoard {
     /**
      * Handle question card click
      */
-    private onQuestionClick(questionIndex: number): void {
+    private onQuestionClick(questionIndex: number, price: number): void {
         this.selectedQuestionIndex = questionIndex;
+        this.selectedQuestionPrice = price;
 
         // Show loading state
         this.variantsContainer.innerHTML = '<div class="loading-text">Загрузка вариантов...</div>';
@@ -215,7 +239,7 @@ export class QuestionBoard {
      * Handle variant button click
      */
     private onVariantClick(answer: string, button: HTMLButtonElement): void {
-        if (this.selectedQuestionIndex === null) {
+        if (this.selectedQuestionIndex === null || this.selectedQuestionPrice === null) {
             return;
         }
 
@@ -225,8 +249,8 @@ export class QuestionBoard {
             (btn as HTMLButtonElement).disabled = true;
         });
 
-        // Submit answer to server
-        GameEngine.call('submit_answer', [this.selectedQuestionIndex, answer], (result, error) => {
+        // Submit answer to server with question index, answer, and price
+        GameEngine.call('submit_answer', [this.selectedQuestionIndex, answer, this.selectedQuestionPrice], (result, error) => {
             if (error) {
                 alert(`Ошибка: ${error}`);
                 // Re-enable buttons
@@ -240,6 +264,10 @@ export class QuestionBoard {
             const isCorrect = result as boolean;
             if (isCorrect) {
                 button.classList.add('correct');
+                // Update score for selected team
+                if (this.selectedTeam) {
+                    this.updateTeamScore(this.selectedTeam);
+                }
                 setTimeout(() => {
                     alert('Правильно! 🎉');
                     this.variantsContainer.style.display = 'none';
@@ -247,14 +275,37 @@ export class QuestionBoard {
                 }, 500);
             } else {
                 button.classList.add('incorrect');
+                // Update score for selected team (even if wrong)
+                if (this.selectedTeam) {
+                    this.updateTeamScore(this.selectedTeam);
+                }
                 setTimeout(() => {
                     alert('Неправильно 😢');
-                    // Re-enable buttons for another try
-                    allButtons.forEach(btn => {
-                        (btn as HTMLButtonElement).disabled = false;
-                    });
-                    button.classList.remove('incorrect');
+                    // Close variants container
+                    this.variantsContainer.style.display = 'none';
+                    this.variantsContainer.innerHTML = '';
                 }, 500);
+            }
+        });
+    }
+
+    /**
+     * Update team score display
+     */
+    private updateTeamScore(teamName: string): void {
+        GameEngine.call('get_team_score', [teamName], (result, error) => {
+            if (error) {
+                console.error(`Failed to get score for ${teamName}:`, error);
+                return;
+            }
+
+            const score = result as number;
+            const scoreDisplay = this.teamsContainer.querySelector(
+                `.team-score[data-team="${teamName}"]`
+            ) as HTMLElement;
+
+            if (scoreDisplay) {
+                scoreDisplay.textContent = `${score} очков`;
             }
         });
     }
