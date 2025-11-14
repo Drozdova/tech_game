@@ -14,6 +14,7 @@ class Game:
 
     def __init__(self) -> None:
         self._load_data()
+        self.teams_scores = {}
 
     def list_teams(self) -> list[str]:
         """List all teams in the game."""
@@ -23,10 +24,19 @@ class Game:
     def set_current_team(self, team_name: str) -> None:
         """Set the current team for the game."""
         self.current_team = team_name
+        if team_name not in self.teams_scores:
+            self.teams_scores[team_name] = 0
+
+    def count_score(self, price, is_correct):
+        if is_correct:
+            self.teams_scores[self.current_team] += price
+        else:
+            self.teams_scores[self.current_team] -= price
 
     def get_team_score(self, team_name: str) -> int:
-        """Get the score for a team."""
-        raise NotImplementedError()
+        """Передает общий счет команды по запросу"""
+        team_score = self.teams_scores[team_name]
+        return team_score
 
     def list_questions_and_prices(self) -> list[dict]:
         self.question_and_prices_list = []
@@ -39,9 +49,11 @@ class Game:
         """Get the variants for a question."""
         return self.file_data[question_index]["variants"]
 
-    def submit_answer(self, question_index, answer: str) -> bool:
+    def submit_answer(self, question_index, answer: str, price) -> bool:
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
-        return self.file_data[question_index]["correct_answer"] == answer
+        is_correct = self.file_data[question_index]["correct_answer"] == answer
+        self.count_score(price, is_correct)
+        return is_correct
 
     def _load_data(self):
         """Load questions from the folder."""
