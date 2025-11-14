@@ -15,6 +15,7 @@ export class QuestionBoard {
   private questionsContainer: HTMLElement;
   private variantsContainer: HTMLElement;
   private selectedQuestionIndex: number | null = null;
+  private selectedQuestionPrice: number | null = null;
   private selectedTeam: string | null = null;
 
   constructor() {
@@ -180,7 +181,7 @@ export class QuestionBoard {
         }
 
         // Add click handler
-        template.onclick = () => this.onQuestionClick(index);
+        template.onclick = () => this.onQuestionClick(index, price);
 
         // Add to container
         this.questionsContainer.appendChild(template);
@@ -189,8 +190,9 @@ export class QuestionBoard {
     /**
      * Handle question card click
      */
-    private onQuestionClick(questionIndex: number): void {
+    private onQuestionClick(questionIndex: number, price: number): void {
         this.selectedQuestionIndex = questionIndex;
+        this.selectedQuestionPrice = price;
 
         // Show loading state
         this.variantsContainer.innerHTML = '<div class="loading-text">Загрузка вариантов...</div>';
@@ -237,7 +239,7 @@ export class QuestionBoard {
      * Handle variant button click
      */
     private onVariantClick(answer: string, button: HTMLButtonElement): void {
-        if (this.selectedQuestionIndex === null) {
+        if (this.selectedQuestionIndex === null || this.selectedQuestionPrice === null) {
             return;
         }
 
@@ -247,8 +249,8 @@ export class QuestionBoard {
             (btn as HTMLButtonElement).disabled = true;
         });
 
-        // Submit answer to server
-        GameEngine.call('submit_answer', [this.selectedQuestionIndex, answer], (result, error) => {
+        // Submit answer to server with question index, answer, and price
+        GameEngine.call('submit_answer', [this.selectedQuestionIndex, answer, this.selectedQuestionPrice], (result, error) => {
             if (error) {
                 alert(`Ошибка: ${error}`);
                 // Re-enable buttons
@@ -273,13 +275,15 @@ export class QuestionBoard {
                 }, 500);
             } else {
                 button.classList.add('incorrect');
+                // Update score for selected team (even if wrong)
+                if (this.selectedTeam) {
+                    this.updateTeamScore(this.selectedTeam);
+                }
                 setTimeout(() => {
                     alert('Неправильно 😢');
-                    // Re-enable buttons for another try
-                    allButtons.forEach(btn => {
-                        (btn as HTMLButtonElement).disabled = false;
-                    });
-                    button.classList.remove('incorrect');
+                    // Close variants container
+                    this.variantsContainer.style.display = 'none';
+                    this.variantsContainer.innerHTML = '';
                 }, 500);
             }
         });
