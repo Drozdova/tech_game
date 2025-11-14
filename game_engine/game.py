@@ -15,17 +15,18 @@ class Game:
     def __init__(self) -> None:
         self._load_data()
         self.teams_scores = {}
+        self.current_team_index = 0
 
     def list_teams(self) -> list[str]:
         """List all teams in the game."""
-        lst_teams = input('Введите имена команд через запятую: ').split(',')
-        return lst_teams
+        self.lst_teams = input('Введите имена команд через запятую: ').split(',')
+        self.teams_scores.update(dict.fromkeys(self.lst_teams, 0))
+        return self.lst_teams
 
-    def set_current_team(self, team_name: str) -> None:
-        """Set the current team for the game."""
-        self.current_team = team_name
-        if team_name not in self.teams_scores:
-            self.teams_scores[team_name] = 0
+    def get_current_team(self) -> str:
+        """Передаёт название команды, которая должна ходить"""
+        self.current_team = self.lst_teams[self.current_team_index]
+        return self.current_team
 
     def count_score(self, price, is_correct):
         if is_correct:
@@ -66,3 +67,9 @@ class Game:
                 data = json.load(file)
                 data["price"] = i
                 self.file_data.append(data)
+
+    def next_team(self):
+        if self.current_team_index == len(self.lst_teams) - 1:
+            self.current_team_index = 0
+        else:
+            self.current_team_index += 1

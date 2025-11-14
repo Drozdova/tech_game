@@ -66,25 +66,31 @@ export class QuestionBoard {
       // Create title for teams panel
       const teamsTitle = document.createElement('h2');
       teamsTitle.className = 'teams-title';
-      teamsTitle.textContent = 'Выбери команду:';
+      teamsTitle.textContent = 'Команды:';
       this.teamsContainer.appendChild(teamsTitle);
+
+      // Create current team indicator
+      const currentTeamIndicator = document.createElement('div');
+      currentTeamIndicator.className = 'current-team-indicator';
+      currentTeamIndicator.id = 'current-team-indicator';
+      this.teamsContainer.appendChild(currentTeamIndicator);
 
       // Create buttons container
       const buttonsContainer = document.createElement('div');
       buttonsContainer.className = 'teams-buttons';
 
-      // Create button for each team
+      // Create display for each team (not clickable)
       const teams = result as string[];
       teams.forEach((teamName) => {
         // Create team item container
         const teamItem = document.createElement('div');
         teamItem.className = 'team-item';
 
-        // Create button
-        const button = document.createElement('button');
-        button.className = 'team-button';
-        button.textContent = teamName;
-        button.onclick = () => this.onTeamSelect(teamName, button);
+        // Create team display (not a button)
+        const teamDisplay = document.createElement('div');
+        teamDisplay.className = 'team-display';
+        teamDisplay.textContent = teamName;
+        teamDisplay.dataset.team = teamName;
 
         // Create score display
         const scoreDisplay = document.createElement('span');
@@ -92,8 +98,8 @@ export class QuestionBoard {
         scoreDisplay.dataset.team = teamName;
         scoreDisplay.textContent = '0 очков';
 
-        // Add button and score to team item
-        teamItem.appendChild(button);
+        // Add display and score to team item
+        teamItem.appendChild(teamDisplay);
         teamItem.appendChild(scoreDisplay);
         buttonsContainer.appendChild(teamItem);
 
@@ -105,31 +111,40 @@ export class QuestionBoard {
 
       // Load questions after teams are loaded
       this.loadQuestions();
+      
+      // Get and display current team
+      this.updateCurrentTeam();
     });
   }
 
   /**
-   * Handle team selection
+   * Update current team display from server
    */
-  private onTeamSelect(teamName: string, button: HTMLButtonElement): void {
-    // Update selected team
-    this.selectedTeam = teamName;
-
-    // Update UI - remove 'selected' class from all buttons
-    const allButtons = this.teamsContainer.querySelectorAll('.team-button');
-    allButtons.forEach(btn => btn.classList.remove('selected'));
-
-    // Add 'selected' class to clicked button
-    button.classList.add('selected');
-
-    // Notify server about team selection
-    GameEngine.call('set_current_team', [teamName], (result, error) => {
+  private updateCurrentTeam(): void {
+    GameEngine.call('get_current_team', [], (result, error) => {
       if (error) {
-        console.error('Failed to set current team:', error);
-        alert(`Ошибка выбора команды: ${error}`);
-      } else {
-        console.log(`Team selected: ${teamName}`);
+        console.error('Failed to get current team:', error);
+        return;
       }
+
+      const currentTeam = result as string;
+      this.selectedTeam = currentTeam;
+
+      // Update indicator
+      const indicator = document.getElementById('current-team-indicator');
+      if (indicator) {
+        indicator.textContent = `Сейчас ходит: ${currentTeam}`;
+      }
+
+      // Highlight current team
+      const allTeams = this.teamsContainer.querySelectorAll('.team-display');
+      allTeams.forEach(team => {
+        if ((team as HTMLElement).dataset.team === currentTeam) {
+          team.classList.add('current');
+        } else {
+          team.classList.remove('current');
+        }
+      });
     });
   }
 
@@ -272,6 +287,8 @@ export class QuestionBoard {
                     alert('Правильно! 🎉');
                     this.variantsContainer.style.display = 'none';
                     this.variantsContainer.innerHTML = '';
+                    // Switch to next team
+                    this.nextTeam();
                 }, 500);
             } else {
                 button.classList.add('incorrect');
@@ -284,8 +301,32 @@ export class QuestionBoard {
                     // Close variants container
                     this.variantsContainer.style.display = 'none';
                     this.variantsContainer.innerHTML = '';
+                    // Switch to next team
+                    this.nextTeam();
                 }, 500);
             }
+        });
+    }
+
+    /**
+     * Switch to next team
+     */
+    private nextTeam(): void {
+        GameEngine.call('next_team', [], (result, error) => {
+            if (error) {
+                console.error('Failed to switch team:', error);
+                return;
+            }
+            // Update current team display
+            this.updateCurrentTeam();
+            // Update all team scores
+            const allTeams = this.teamsContainer.querySelectorAll('.team-display');
+            allTeams.forEach(team => {
+                const teamName = (team as HTMLElement).dataset.team;
+                if (teamName) {
+                    this.updateTeamScore(teamName);
+                }
+            });
         });
     }
 
