@@ -156,6 +156,33 @@ body {
   flex-wrap: wrap;
 }
 
+.team-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-score {
+  font-size: 14px;
+  font-weight: 600;
+  color: #667eea;
+  padding: 4px 12px;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  min-width: 80px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.team-item:has(.team-button.selected) .team-score {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
 .team-button {
   padding: 12px 24px;
   background: white;

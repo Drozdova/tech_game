@@ -52,9 +52,9 @@ class DummyGame(Game):
             lambda: [f'Q{question_index}: Variant {i}' for i in range(4)]
         )
     
-    def submit_answer(self, question_id, answer: str) -> bool:
+    def submit_answer(self, question_id, answer: str, price: int) -> bool:
         return try_super_or(
-            lambda: super(DummyGame, self).submit_answer(question_id, answer),
+            lambda: super(DummyGame, self).submit_answer(question_id, answer, price),
             lambda: random.choice([True, False])
         )
 
