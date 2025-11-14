@@ -167,10 +167,11 @@ export class QuestionBoard {
             interface QuestionInfo {
                 title: string;
                 price: number;
+                used: boolean;
             }
             const questions = result as QuestionInfo[];
             questions.forEach((question, index) => {
-                this.createQuestionCard(question.title, question.price, index);
+                this.createQuestionCard(question.title, question.price, index, question.used);
             });
         });
     }
@@ -178,7 +179,7 @@ export class QuestionBoard {
     /**
      * Create a question card
      */
-    private createQuestionCard(title: string, price: number, index: number): void {
+    private createQuestionCard(title: string, price: number, index: number, used: boolean): void {
         const template = TemplateManager.getTemplate('question_card');
         if (!template) {
             console.error('Failed to load question_card template');
@@ -195,8 +196,15 @@ export class QuestionBoard {
             pointsEl.textContent = `${price} баллов`;
         }
 
-        // Add click handler
-        template.onclick = () => this.onQuestionClick(index, price);
+        // Mark as used if needed
+        if (used) {
+            template.classList.add('used');
+            titleEl.textContent = 'Использован';
+            // Remove click handler for used questions
+        } else {
+            // Add click handler only for unused questions
+            template.onclick = () => this.onQuestionClick(index, price);
+        }
 
         // Add to container
         this.questionsContainer.appendChild(template);
@@ -287,6 +295,8 @@ export class QuestionBoard {
                     alert('Правильно! 🎉');
                     this.variantsContainer.style.display = 'none';
                     this.variantsContainer.innerHTML = '';
+                    // Reload questions to hide used ones
+                    this.loadQuestions();
                     // Switch to next team
                     this.nextTeam();
                 }, 500);
@@ -301,6 +311,8 @@ export class QuestionBoard {
                     // Close variants container
                     this.variantsContainer.style.display = 'none';
                     this.variantsContainer.innerHTML = '';
+                    // Reload questions to hide used ones
+                    this.loadQuestions();
                     // Switch to next team
                     this.nextTeam();
                 }, 500);
