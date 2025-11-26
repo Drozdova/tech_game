@@ -1,29 +1,34 @@
 """Base Game interface."""
 
+from pathlib import Path
 from typing import Any
-
-
+from dataclasses import dataclass, field
 import json
 
 
+@dataclass
 class QuestionInfo:
     title: str
-    cost: int
+    price: int
+    correct_answer: str
+    variants: list[str]
+    used: bool = False
 
 
 class Game:
     """Base class for game logic. All game methods should be synchronous."""
-    topic_name = 'Окружающий мир'
+
+    topic_name = "Кошечки и собачки"
+    _questions_info: dict[str, QuestionInfo]
 
     def __init__(self) -> None:
         self._load_data()
         self.teams_scores = {}
         self.current_team_index = 0
-        self.used_questions_indexes = set[int]()
 
     def list_teams(self) -> list[str]:
         """List all teams in the game."""
-        self.lst_teams = input('Введите имена команд через запятую: ').split(',')
+        self.lst_teams = input("Введите имена команд через запятую: ").split(",")
         self.teams_scores.update(dict.fromkeys(self.lst_teams, 0))
         return self.lst_teams
 
@@ -32,7 +37,7 @@ class Game:
             self.current_team_index = 0
         else:
             self.current_team_index += 1
-    
+
     def get_current_team(self) -> str:
         """Передаёт название команды, которая должна ходить"""
         self.current_team = self.lst_teams[self.current_team_index]
@@ -49,40 +54,40 @@ class Game:
         team_score = self.teams_scores[team_name]
         return team_score
 
-    def list_questions_and_prices(self) -> list[dict]:
-        self.questions_and_prices_dict = [
-            {k: d[k] for k in ("title", "price")} for d in self.file_data
-        ]
-        if not self.used_questions_indexes:
-            for q in self.questions_and_prices_dict:
-                q['used'] = False
-        else:
-            for index in self.used_questions_indexes:
-                self.questions_and_prices_dict[index]['used'] = True
-        return self.questions_and_prices_dict
+    def get_questions_list(self) -> list[str]:
+        """Передает список вопросов"""
+        return list(self._questions_info.keys())
 
-    def mark_question_used(self, question_index):
-        self.used_questions_indexes.add(question_index)
+    def get_prices(self) -> list[int]:
+        '''Передает цены вопросов'''
+        prices = [self._questions_info[x].price for x in self._questions_info]
+        return prices
     
-    def get_variants_for_question(self, question_index: int) -> list[str]:
-        """Get the variants for a question."""
-        return self.file_data[question_index]["variants"]
+    def mark_question_used(self, question):
+        self._questions_info[question].used = True
 
-    def submit_answer(self, question_index, answer: str, price) -> bool:
+    def get_variants_for_question(self, question: str) -> list[str]:
+        """Get the variants for a question."""
+        return self._questions_info[question].variants
+
+    def submit_answer(self, question, answer: str, price) -> bool:
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
-        is_correct = self.file_data[question_index]["correct_answer"] == answer
+        is_correct = self._questions_info[question].correct_answer == answer
         self.count_score(price, is_correct)
-        self.mark_question_used(question_index)
+        self.mark_question_used(question)
         return is_correct
+
+    def is_used(self, question: str) -> bool:
+        is_used = self._questions_info[question].used
+        return is_used
 
     def _load_data(self):
         """Load questions from the folder."""
-        self.file_data = []
+        self._questions_info = {}
         for i in range(100, 1000, 100):
             with open(
                 f"game_engine/resources/game_questions/{self.topic_name}/{i}.json",
                 encoding="utf-8",
             ) as file:
                 data = json.load(file)
-                data["price"] = i
-                self.file_data.append(data)
+                self._questions_info[data["title"]] = QuestionInfo(data["title"], i, data["correct_answer"], data["variants"])
