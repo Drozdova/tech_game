@@ -14,7 +14,7 @@ export class QuestionBoard {
   private teamsContainer: HTMLElement;
   private questionsContainer: HTMLElement;
   private variantsContainer: HTMLElement;
-  private selectedQuestionIndex: number | null = null;
+  private selectedQuestion: string | null = null;
   private selectedQuestionPrice: number | null = null;
   private selectedTeam: string | null = null;
 
@@ -154,24 +154,40 @@ export class QuestionBoard {
   private loadQuestions(): void {
         this.questionsContainer.innerHTML = '<div class="loading-text">Загрузка вопросов...</div>';
 
-        GameEngine.call('list_questions_and_prices', [], (result, error) => {
-            if (error) {
-                this.questionsContainer.innerHTML = `<div class="error-text">Ошибка: ${error}</div>`;
+        // Load questions list and prices
+        GameEngine.call('get_questions_list', [], (questionsResult, questionsError) => {
+            if (questionsError) {
+                this.questionsContainer.innerHTML = `<div class="error-text">Ошибка: ${questionsError}</div>`;
                 return;
             }
 
-            // Clear loading message
-            this.questionsContainer.innerHTML = '';
+            GameEngine.call('get_prices', [], (pricesResult, pricesError) => {
+                if (pricesError) {
+                    this.questionsContainer.innerHTML = `<div class="error-text">Ошибка: ${pricesError}</div>`;
+                    return;
+                }
 
-            // Create card for each question
-            interface QuestionInfo {
-                title: string;
-                price: number;
-                used: boolean;
-            }
-            const questions = result as QuestionInfo[];
-            questions.forEach((question, index) => {
-                this.createQuestionCard(question.title, question.price, index, question.used);
+                // Clear loading message
+                this.questionsContainer.innerHTML = '';
+
+                const questions = questionsResult as string[];
+                const prices = pricesResult as number[];
+
+                // Check each question if it's used
+                let loadedCount = 0;
+                questions.forEach((questionTitle, index) => {
+                    GameEngine.call('is_used', [questionTitle], (usedResult, usedError) => {
+                        loadedCount++;
+                        const isUsed = usedResult as boolean;
+                        
+                        if (!isUsed) {
+                            this.createQuestionCard(questionTitle, prices[index], questionTitle);
+                        } else {
+                            // Create placeholder for used question
+                            this.createUsedQuestionCard(questionTitle, prices[index]);
+                        }
+                    });
+                });
             });
         });
     }
@@ -179,7 +195,7 @@ export class QuestionBoard {
     /**
      * Create a question card
      */
-    private createQuestionCard(title: string, price: number, index: number, used: boolean): void {
+    private createQuestionCard(title: string, price: number, questionTitle: string): void {
         const template = TemplateManager.getTemplate('question_card');
         if (!template) {
             console.error('Failed to load question_card template');
@@ -196,15 +212,34 @@ export class QuestionBoard {
             pointsEl.textContent = `${price} баллов`;
         }
 
-        // Mark as used if needed
-        if (used) {
-            template.classList.add('used');
-            titleEl.textContent = 'Использован';
-            // Remove click handler for used questions
-        } else {
-            // Add click handler only for unused questions
-            template.onclick = () => this.onQuestionClick(index, price);
+        // Add click handler
+        template.onclick = () => this.onQuestionClick(questionTitle, price);
+
+        // Add to container
+        this.questionsContainer.appendChild(template);
+    }
+
+    /**
+     * Create a used question card (placeholder)
+     */
+    private createUsedQuestionCard(title: string, price: number): void {
+        const template = TemplateManager.getTemplate('question_card');
+        if (!template) {
+            console.error('Failed to load question_card template');
+            return;
         }
+
+        // Fill in the template
+        const titleEl = template.querySelector('.question-title') as HTMLElement;
+        const pointsEl = template.querySelector('.question-points') as HTMLElement;
+
+        if (titleEl && pointsEl) {
+            titleEl.textContent = 'Использован';
+            pointsEl.textContent = `${price} баллов`;
+        }
+
+        // Mark as used
+        template.classList.add('used');
 
         // Add to container
         this.questionsContainer.appendChild(template);
@@ -213,8 +248,8 @@ export class QuestionBoard {
     /**
      * Handle question card click
      */
-    private onQuestionClick(questionIndex: number, price: number): void {
-        this.selectedQuestionIndex = questionIndex;
+    private onQuestionClick(questionTitle: string, price: number): void {
+        this.selectedQuestion = questionTitle;
         this.selectedQuestionPrice = price;
 
         // Show loading state
@@ -222,7 +257,7 @@ export class QuestionBoard {
         this.variantsContainer.style.display = 'block';
 
         // Load variants from server
-        GameEngine.call('get_variants_for_question', [questionIndex], (result, error) => {
+        GameEngine.call('get_variants_for_question', [questionTitle], (result, error) => {
             if (error) {
                 this.variantsContainer.innerHTML = `<div class="error-text">Ошибка: ${error}</div>`;
                 return;
@@ -262,7 +297,7 @@ export class QuestionBoard {
      * Handle variant button click
      */
     private onVariantClick(answer: string, button: HTMLButtonElement): void {
-        if (this.selectedQuestionIndex === null || this.selectedQuestionPrice === null) {
+        if (this.selectedQuestion === null || this.selectedQuestionPrice === null) {
             return;
         }
 
@@ -272,8 +307,8 @@ export class QuestionBoard {
             (btn as HTMLButtonElement).disabled = true;
         });
 
-        // Submit answer to server with question index, answer, and price
-        GameEngine.call('submit_answer', [this.selectedQuestionIndex, answer, this.selectedQuestionPrice], (result, error) => {
+        // Submit answer to server with question title, answer, and price
+        GameEngine.call('submit_answer', [this.selectedQuestion, answer, this.selectedQuestionPrice], (result, error) => {
             if (error) {
                 alert(`Ошибка: ${error}`);
                 // Re-enable buttons
