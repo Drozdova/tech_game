@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 from dataclasses import dataclass, field
 import json
+from pathlib import Path
 
 
 @dataclass
@@ -21,17 +22,70 @@ class Team:
     score: int = 0
 
 
-class Game:
+class QuestionCatalog:
+    _question_catalog: dict[str, dict[str, QuestionInfo]]
+
+    def __init__(self):
+        self._current_file_dir = Path(__file__).parent
+        self._categories_folder = (
+            self._current_file_dir / "resources" / "game_questions")
+        self._load_category()
+        self._load_data()
+
+    def _load_category(self):
+        """Load categories from folders"""
+        self._question_catalog = {
+            item.name: {} for item in self._categories_folder.iterdir() if item.is_dir()
+        }
+
+    def _load_data(self):
+        """Load questions from the folder."""
+        for category in self._question_catalog:
+            for i in range(100, 1000, 100):
+                file_name = f"game_engine/resources/game_questions/{category}/{i}.json"#тут надо потом исправить с использованием current_file_dir
+                with open(
+                    file_name,
+                    encoding="utf-8",
+                ) as file:
+                    data = json.load(file)
+                    self._question_catalog[category][data["title"]] = QuestionInfo(
+                        data["title"], i, data["correct_answer"], data["variants"]
+                    )
+
+    def get_category_list(self) -> list[str]:
+        """Передает список категорий"""
+        return list(self._question_catalog.keys())
+
+    def set_category_questions(self, selected_category: str):
+        """Задает вопросы по выбранной категории"""
+        self._category_question = self._question_catalog[selected_category]
+    
+    def get_questions_list(self) -> list[str]:
+        """Передает список вопросов"""
+        return list(self._category_question.keys())
+
+    def _mark_question_used(self, question):
+        """Отмечает вопрос отвеченным"""
+        self._category_question[question].used = True
+
+    def get_prices(self) -> list[int]:
+        """Передает цены вопросов"""
+        return [self._category_question[x].price for x in self._category_question]
+
+    def get_variants_for_question(self, question: str) -> list[str]:
+        """Get the variants for a question."""
+        return self._category_question[question].variants
+
+
+class Game(QuestionCatalog):
     """Base class for game logic. All game methods should be synchronous."""
 
-    topic_name = "Кошечки и собачки"
-    _questions_info: dict[str, QuestionInfo]
     _teams_info: dict[str, Team]
 
     def __init__(self):
-        self._load_data()
         self._current_team_index = 0
         self._teams_info = {}
+        super().__init__()
 
     def set_teams(self, teams: list[str]):
         self._teams_info = {name: Team(name) for name in teams}
@@ -58,43 +112,12 @@ class Game:
         """Передает общий счет команды по запросу"""
         return self._teams_info[team_name].score
 
-    def get_questions_list(self) -> list[str]:
-        """Передает список вопросов"""
-        return list(self._questions_info.keys())
-
-    def get_prices(self) -> list[int]:
-        """Передает цены вопросов"""
-        return [self._questions_info[x].price for x in self._questions_info]
-
-    def _mark_question_used(self, question):
-        self._questions_info[question].used = True
-
-    def get_variants_for_question(self, question: str) -> list[str]:
-        """Get the variants for a question."""
-        return self._questions_info[question].variants
-
     def submit_answer(self, question: str, answer: str, price: int) -> bool:
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
-        is_correct = self._questions_info[question].correct_answer == answer
+        is_correct = self._category_question[question].correct_answer == answer
         self._update_score(price, is_correct)
         self._mark_question_used(question)
         return is_correct
 
     def is_used(self, question: str) -> bool:
-        return self._questions_info[question].used
-
-    def _load_data(self):
-        """Load questions from the folder."""
-        self._questions_info = {}
-        for i in range(100, 1000, 100):
-            file_name = (
-                f"game_engine/resources/game_questions/{self.topic_name}/{i}.json"
-            )
-            with open(
-                file_name,
-                encoding="utf-8",
-            ) as file:
-                data = json.load(file)
-                self._questions_info[data["title"]] = QuestionInfo(
-                    data["title"], i, data["correct_answer"], data["variants"]
-                )
+        return self._category_question[question].used
