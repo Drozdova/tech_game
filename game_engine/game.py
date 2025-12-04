@@ -15,79 +15,86 @@ class QuestionInfo:
     used: bool = False
 
 
+@dataclass
+class Team:
+    name: str
+    score: int = 0
+
+
 class Game:
     """Base class for game logic. All game methods should be synchronous."""
 
     topic_name = "Кошечки и собачки"
     _questions_info: dict[str, QuestionInfo]
+    _teams_info: dict[str, Team]
 
-    def __init__(self) -> None:
+    def __init__(self):
         self._load_data()
-        self.teams_scores = {}
-        self.current_team_index = 0
+        self._current_team_index = 0
+        self._teams_info = {}
 
-    def list_teams(self) -> list[str]:
+    def set_teams(self, teams: list[str]):
+        self._teams_info = {name: Team(name) for name in teams}
+
+    def get_team_list(self) -> list[str]:
         """List all teams in the game."""
-        self.lst_teams = input("Введите имена команд через запятую: ").split(",")
-        self.teams_scores.update(dict.fromkeys(self.lst_teams, 0))
-        return self.lst_teams
+        return list(self._teams_info.keys())
 
     def next_team(self):
-        if self.current_team_index == len(self.lst_teams) - 1:
-            self.current_team_index = 0
+        if self._current_team_index == len(self._teams_info) - 1:
+            self._current_team_index = 0
         else:
-            self.current_team_index += 1
+            self._current_team_index += 1
 
     def get_current_team(self) -> str:
         """Передаёт название команды, которая должна ходить"""
-        self.current_team = self.lst_teams[self.current_team_index]
-        return self.current_team
+        return self.get_team_list()[self._current_team_index]
 
-    def count_score(self, price, is_correct):
-        if is_correct:
-            self.teams_scores[self.current_team] += price
-        else:
-            self.teams_scores[self.current_team] -= price
+    def _update_score(self, price: int, is_correct: bool):
+        current_team = self._teams_info[self.get_current_team()]
+        current_team.score += price if is_correct else -price
 
     def get_team_score(self, team_name: str) -> int:
         """Передает общий счет команды по запросу"""
-        team_score = self.teams_scores[team_name]
-        return team_score
+        return self._teams_info[team_name].score
 
     def get_questions_list(self) -> list[str]:
         """Передает список вопросов"""
         return list(self._questions_info.keys())
 
     def get_prices(self) -> list[int]:
-        '''Передает цены вопросов'''
-        prices = [self._questions_info[x].price for x in self._questions_info]
-        return prices
-    
-    def mark_question_used(self, question):
+        """Передает цены вопросов"""
+        return [self._questions_info[x].price for x in self._questions_info]
+
+    def _mark_question_used(self, question):
         self._questions_info[question].used = True
 
     def get_variants_for_question(self, question: str) -> list[str]:
         """Get the variants for a question."""
         return self._questions_info[question].variants
 
-    def submit_answer(self, question, answer: str, price) -> bool:
+    def submit_answer(self, question: str, answer: str, price: int) -> bool:
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
         is_correct = self._questions_info[question].correct_answer == answer
-        self.count_score(price, is_correct)
-        self.mark_question_used(question)
+        self._update_score(price, is_correct)
+        self._mark_question_used(question)
         return is_correct
 
     def is_used(self, question: str) -> bool:
-        is_used = self._questions_info[question].used
-        return is_used
+        return self._questions_info[question].used
 
     def _load_data(self):
         """Load questions from the folder."""
         self._questions_info = {}
         for i in range(100, 1000, 100):
+            file_name = (
+                f"game_engine/resources/game_questions/{self.topic_name}/{i}.json"
+            )
             with open(
-                f"game_engine/resources/game_questions/{self.topic_name}/{i}.json",
+                file_name,
                 encoding="utf-8",
             ) as file:
                 data = json.load(file)
-                self._questions_info[data["title"]] = QuestionInfo(data["title"], i, data["correct_answer"], data["variants"])
+                self._questions_info[data["title"]] = QuestionInfo(
+                    data["title"], i, data["correct_answer"], data["variants"]
+                )

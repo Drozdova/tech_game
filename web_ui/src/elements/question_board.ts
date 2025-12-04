@@ -23,11 +23,22 @@ export class QuestionBoard {
     this.el = document.createElement('div');
     this.el.className = 'question-board';
 
-    // Create title
+    // Create header with title and new game button
+    const header = document.createElement('div');
+    header.className = 'board-header';
+    
     const title = document.createElement('h1');
     title.className = 'board-title';
     title.textContent = 'Игра-викторина';
-    this.el.appendChild(title);
+    header.appendChild(title);
+
+    const newGameButton = document.createElement('button');
+    newGameButton.className = 'new-game-button';
+    newGameButton.textContent = 'Новая игра';
+    newGameButton.onclick = () => this.startNewGame();
+    header.appendChild(newGameButton);
+
+    this.el.appendChild(header);
 
     // Create teams panel
     this.teamsContainer = document.createElement('div');
@@ -54,7 +65,7 @@ export class QuestionBoard {
   private loadTeams(): void {
     this.teamsContainer.innerHTML = '<div class="loading-text">Загрузка команд...</div>';
 
-    GameEngine.call('list_teams', [], (result, error) => {
+    GameEngine.call('get_team_list', [], (result, error) => {
       if (error) {
         this.teamsContainer.innerHTML = `<div class="error-text">Ошибка загрузки команд: ${error}</div>`;
         return;
@@ -396,6 +407,17 @@ export class QuestionBoard {
                 scoreDisplay.textContent = `${score} очков`;
             }
         });
+    }
+
+    /**
+     * Start a new game - clear localStorage and reload page
+     */
+    private startNewGame(): void {
+        if (confirm('Вы уверены, что хотите начать новую игру? Текущий прогресс будет потерян.')) {
+            localStorage.removeItem('gameStarted');
+            localStorage.removeItem('teams');
+            window.location.reload();
+        }
     }
 }
 
