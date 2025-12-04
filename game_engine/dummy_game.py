@@ -57,4 +57,3 @@ class DummyGame(Game):
             lambda: super(DummyGame, self).submit_answer(question_id, answer, price),
             lambda: random.choice([True, False])
         )
-

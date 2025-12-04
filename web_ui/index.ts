@@ -11,6 +11,7 @@ import { GameEngine } from './src/game_engine.js';
 import { TemplateManager } from './src/template_manager.js';
 import { QuestionBoard } from './src/elements/question_board.js';
 import { TeamSetup } from './src/elements/team_setup.js';
+import { CategorySelect } from './src/elements/category_select.js';
 
 // Get app container
 const appContainer = document.getElementById('app');  
@@ -34,20 +35,43 @@ GameEngine.connect('ws://localhost:8000', () => {
     try {
       appContainer.innerHTML = ''; // Clear loading message
       
+      // Helper function to show category selection
+      const showCategorySelect = () => {
+        appContainer.innerHTML = '';
+        const categorySelect = new CategorySelect();
+        appContainer.appendChild(categorySelect.el);
+
+        categorySelect.onSelect((category) => {
+          console.log('Category selected:', category);
+          localStorage.setItem('selectedCategory', category);
+          
+          appContainer.innerHTML = '';
+          const questionBoard = new QuestionBoard();
+          appContainer.appendChild(questionBoard.el);
+          
+          console.log('Game started with category:', category);
+        });
+      };
+
       const gameStarted = localStorage.getItem('gameStarted') === 'true';
+      const hasCategory = localStorage.getItem('selectedCategory');
       
-      if (gameStarted) {
+      if (gameStarted && hasCategory) {
         // Game was already started, go directly to game board
         console.log('Resuming game from localStorage...');
         const questionBoard = new QuestionBoard();
         appContainer.appendChild(questionBoard.el);
         console.log('Game resumed successfully!');
+      } else if (gameStarted && !hasCategory) {
+        // Teams set but no category selected
+        console.log('Teams set, showing category selection...');
+        showCategorySelect();
       } else {
         // Show team setup
         const teamSetup = new TeamSetup();
         appContainer.appendChild(teamSetup.el);
 
-        // When teams are set, show the game board
+        // When teams are set, show category selection
         teamSetup.onStart((teams) => {
           console.log('Teams created:', teams);
           
@@ -55,12 +79,7 @@ GameEngine.connect('ws://localhost:8000', () => {
           localStorage.setItem('gameStarted', 'true');
           localStorage.setItem('teams', JSON.stringify(teams));
           
-          appContainer.innerHTML = ''; // Clear setup form
-          
-          const questionBoard = new QuestionBoard();
-          appContainer.appendChild(questionBoard.el);
-          
-          console.log('Game started successfully!');
+          showCategorySelect();
         });
         
         console.log('App initialized successfully!');
