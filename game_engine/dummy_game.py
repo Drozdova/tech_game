@@ -24,7 +24,7 @@ class DummyGame(Game):
         
     def list_teams(self) -> list[str]:
         return try_super_or(
-            super(DummyGame, self).list_teams,
+            super(DummyGame, self).teams_list,
             lambda: ["Команда А", "Команда Б", "Команда В"]
         )
 

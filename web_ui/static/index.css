@@ -435,5 +435,134 @@ body {
   color: #c62828;
 }
 
+/* Team Setup styles */
+.team-setup {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  margin: 0 auto;
+}
 
+.setup-title {
+  text-align: center;
+  color: #333;
+  font-size: 32px;
+  margin-bottom: 30px;
+  font-weight: 700;
+}
 
+.teams-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.team-input-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.team-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.team-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.remove-team-button {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #dee2e6;
+  background: white;
+  border-radius: 8px;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-team-button:hover {
+  border-color: #dc3545;
+  color: #dc3545;
+  background: #fff5f5;
+}
+
+.add-team-button {
+  width: 100%;
+  padding: 12px;
+  background: white;
+  border: 2px dashed #667eea;
+  border-radius: 8px;
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.add-team-button:hover {
+  background: #f0f4ff;
+  border-color: #5568d3;
+}
+
+.start-game-button {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.start-game-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+/* Board header styles */
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.new-game-button {
+  padding: 10px 20px;
+  background: #dc3545;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.new-game-button:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+ 
+ 
