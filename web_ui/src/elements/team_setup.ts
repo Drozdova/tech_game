@@ -55,10 +55,21 @@ export class TeamSetup {
     const teamItem = document.createElement('div');
     teamItem.className = 'team-input-item';
 
+    const inputWrapper = document.createElement('div');
+    inputWrapper.className = 'team-input-wrapper';
+
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'team-input';
     input.placeholder = `Команда ${teamsContainer.children.length + 1}`;
+    input.oninput = () => this.validateDuplicates();
+
+    const errorMessage = document.createElement('span');
+    errorMessage.className = 'team-input-error';
+    errorMessage.textContent = 'Команда с таким названием уже существует';
+
+    inputWrapper.appendChild(input);
+    inputWrapper.appendChild(errorMessage);
 
     const removeButton = document.createElement('button');
     removeButton.className = 'remove-team-button';
@@ -66,10 +77,11 @@ export class TeamSetup {
     removeButton.onclick = () => {
       if (teamsContainer.children.length > 1) {
         teamsContainer.removeChild(teamItem);
+        this.validateDuplicates();
       }
     };
 
-    teamItem.appendChild(input);
+    teamItem.appendChild(inputWrapper);
     teamItem.appendChild(removeButton);
     teamsContainer.appendChild(teamItem);
   }
@@ -98,6 +110,13 @@ export class TeamSetup {
       return;
     }
 
+    // Check for duplicates
+    const uniqueTeams = new Set(this.teams.map(t => t.toLowerCase()));
+    if (uniqueTeams.size !== this.teams.length) {
+      alert('Названия команд не должны повторяться!');
+      return;
+    }
+
     // Send teams to server
     GameEngine.call('set_teams', [this.teams], (result, error) => {
       if (error) {
@@ -109,6 +128,51 @@ export class TeamSetup {
       // Call the callback to start the game
       if (this.onStartCallback) {
         this.onStartCallback(this.teams);
+      }
+    });
+  }
+
+  /**
+   * Check for duplicate team names and highlight them
+   */
+  private validateDuplicates(): void {
+    const teamsContainer = this.el.querySelector('#teams-list') as HTMLElement;
+    if (!teamsContainer) return;
+
+    const inputs = teamsContainer.querySelectorAll('.team-input') as NodeListOf<HTMLInputElement>;
+    const names: Map<string, HTMLInputElement[]> = new Map();
+
+    // Group inputs by their trimmed lowercase value (preserve order)
+    inputs.forEach(input => {
+      const name = input.value.trim().toLowerCase();
+      if (name) {
+        if (!names.has(name)) {
+          names.set(name, []);
+        }
+        names.get(name)!.push(input);
+      }
+    });
+
+    // Reset all inputs first
+    inputs.forEach(input => {
+      input.classList.remove('error');
+      const wrapper = input.closest('.team-input-wrapper');
+      if (wrapper) {
+        wrapper.classList.remove('has-error');
+      }
+    });
+
+    // Mark only duplicates (not the first occurrence)
+    names.forEach((inputList) => {
+      if (inputList.length > 1) {
+        // Skip the first one, mark only subsequent duplicates
+        for (let i = 1; i < inputList.length; i++) {
+          inputList[i].classList.add('error');
+          const wrapper = inputList[i].closest('.team-input-wrapper');
+          if (wrapper) {
+            wrapper.classList.add('has-error');
+          }
+        }
       }
     });
   }
