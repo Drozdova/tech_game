@@ -2,14 +2,14 @@
 
 from .app import App
 from .server import GameServer
-from .dummy_game import DummyGame
+from .game import Game
 from .transport import handle_game_message
 
 
 def main():
     """Main entry point for the game server."""
     app = App()
-    game = DummyGame()
+    game = Game()
     server = GameServer(game, host="localhost", port=8000)
     
     # Register message handler
