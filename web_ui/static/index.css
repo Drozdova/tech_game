@@ -645,6 +645,22 @@ body::after {
   box-shadow: none;
 }
 
+.price-card.empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
+.price-card.empty::before {
+  display: none;
+}
+
+.price-card.empty:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
 /* ============================================
    QUESTION PAGE
    ============================================ */
@@ -780,6 +796,12 @@ body::after {
 .question-page .variant-button.incorrect::before {
   content: '✗';
   color: var(--error-red);
+}
+
+.question-page .variants-closing {
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-top: 15px;
 }
 
 /* ============================================

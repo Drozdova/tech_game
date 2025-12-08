@@ -73,6 +73,12 @@ export class QuestionPage {
     });
 
     this.variantsContainer.appendChild(buttonsContainer);
+
+    // Closing bracket
+    const closingBracket = document.createElement('div');
+    closingBracket.className = 'variants-closing';
+    closingBracket.textContent = ']';
+    this.variantsContainer.appendChild(closingBracket);
   }
 
   /**

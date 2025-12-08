@@ -74,6 +74,17 @@ class Game:
         """Передает общий счет команды по запросу"""
         return self._teams_info[team_name].score
 
+    def get_question_position(self, price: int) -> list[int]:
+        if price <= 300:
+            return [1, int(price/100)]
+        elif price <= 600:
+            return [2, int(price/100)-3]
+        else:
+            return [3, int(price/100)-6]
+
+    # def get_row_name(self) -> str:
+
+
     def submit_answer(self, question: str, answer: str, price: int) -> bool:
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
         is_correct = self._question_catalog._get_current_questions_data()[question].correct_answer == answer
