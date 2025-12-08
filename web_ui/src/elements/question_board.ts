@@ -410,13 +410,16 @@ export class QuestionBoard {
     }
 
     /**
-     * Start a new game - clear localStorage and reload page
+     * Start a new game - reset backend state and reload page
      */
     private startNewGame(): void {
         if (confirm('Вы уверены, что хотите начать новую игру? Текущий прогресс будет потерян.')) {
-            localStorage.removeItem('gameStarted');
-            localStorage.removeItem('teams');
-            window.location.reload();
+            GameEngine.call('reset_game', [], (result, error) => {
+                if (error) {
+                    console.error('Failed to reset game:', error);
+                }
+                window.location.reload();
+            });
         }
     }
 }
