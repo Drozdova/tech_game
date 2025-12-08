@@ -1,18 +1,7 @@
 """Base Game interface."""
 
-from pathlib import Path
-from typing import Any
-from dataclasses import dataclass, field
-import json
-
-
-@dataclass
-class QuestionInfo:
-    title: str
-    price: int
-    correct_answer: str
-    variants: list[str]
-    used: bool = False
+from dataclasses import dataclass
+from .question_catalog import QuestionCatalog
 
 
 @dataclass
@@ -24,17 +13,44 @@ class Team:
 class Game:
     """Base class for game logic. All game methods should be synchronous."""
 
-    topic_name = "Кошечки и собачки"
-    _questions_info: dict[str, QuestionInfo]
     _teams_info: dict[str, Team]
+    _question_catalog: QuestionCatalog
+    _current_team_index: int
+
 
     def __init__(self):
-        self._load_data()
+        self._question_catalog = QuestionCatalog()
         self._current_team_index = 0
         self._teams_info = {}
 
+    def get_category_list(self) -> list[str]:
+        return self._question_catalog.get_category_list()
+
+    def set_current_category(self, selected_category: str):
+        return self._question_catalog.set_current_category(selected_category)
+        
+    def get_selected_category(self) -> str | None:
+        return self._question_catalog.get_selected_category()
+
+    def get_current_questions(self) -> list[str]:
+        """Передает список вопросов"""
+        return self._question_catalog.get_current_questions()
+
+    def get_prices(self) -> list[int]:
+        """Передает цены вопросов"""
+        return self._question_catalog.get_prices()
+
+    def get_variants_for_question(self, question: str) -> list[str]:
+        """Get the variants for a question."""
+        return self._question_catalog.get_variants_for_question(question)
+    
     def set_teams(self, teams: list[str]):
         self._teams_info = {name: Team(name) for name in teams}
+
+    def reset_game(self):
+        """Сбрасывает состояние игры"""
+        self._teams_info = {}
+        self._current_team_index = 0
 
     def get_team_list(self) -> list[str]:
         """List all teams in the game."""
@@ -58,43 +74,16 @@ class Game:
         """Передает общий счет команды по запросу"""
         return self._teams_info[team_name].score
 
-    def get_questions_list(self) -> list[str]:
-        """Передает список вопросов"""
-        return list(self._questions_info.keys())
-
-    def get_prices(self) -> list[int]:
-        """Передает цены вопросов"""
-        return [self._questions_info[x].price for x in self._questions_info]
-
-    def _mark_question_used(self, question):
-        self._questions_info[question].used = True
-
-    def get_variants_for_question(self, question: str) -> list[str]:
-        """Get the variants for a question."""
-        return self._questions_info[question].variants
-
     def submit_answer(self, question: str, answer: str, price: int) -> bool:
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
-        is_correct = self._questions_info[question].correct_answer == answer
+        is_correct = self._question_catalog._get_current_questions_data()[question].correct_answer == answer
         self._update_score(price, is_correct)
-        self._mark_question_used(question)
+        self._question_catalog.mark_question_used(question)
         return is_correct
 
     def is_used(self, question: str) -> bool:
-        return self._questions_info[question].used
+        return self._question_catalog._get_current_questions_data()[question].used
 
-    def _load_data(self):
-        """Load questions from the folder."""
-        self._questions_info = {}
-        for i in range(100, 1000, 100):
-            file_name = (
-                f"game_engine/resources/game_questions/{self.topic_name}/{i}.json"
-            )
-            with open(
-                file_name,
-                encoding="utf-8",
-            ) as file:
-                data = json.load(file)
-                self._questions_info[data["title"]] = QuestionInfo(
-                    data["title"], i, data["correct_answer"], data["variants"]
-                )
+
+game = Game()
+game.get_category_list()
