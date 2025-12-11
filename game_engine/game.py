@@ -113,8 +113,15 @@ class Game:
         return is_correct
 
     def is_used(self, question: str) -> bool:
-        return self._question_catalog._get_current_questions_data()[question].used
+        if self._current_category is None:
+            raise Exception("No selected category")
+        return self._current_category.get_question_status(question)
 
-
-game = Game()
-game.get_category_list()
+    def _load_categories(self):
+        _category_folders = list(self._path_to_categories.iterdir())
+        for folder in _category_folders:
+            if any(item.is_dir() for item in folder.iterdir()):
+                category = SubfoldersCategoryController(folder)
+            else:
+                category = CategoryQuestionsControllerBasic(folder)
+            self._categoryControllers[folder.stem] = category
