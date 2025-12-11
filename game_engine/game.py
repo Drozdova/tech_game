@@ -1,7 +1,9 @@
 """Base Game interface."""
 
+from asyncio import streams
+from pathlib import Path
 from dataclasses import dataclass
-from .question_catalog import QuestionCatalog
+from .category_controller import CategoryQuestionsControllerBasic, SubfoldersCategoryController, Position
 
 
 @dataclass
@@ -14,43 +16,27 @@ class Game:
     """Base class for game logic. All game methods should be synchronous."""
 
     _teams_info: dict[str, Team]
-    _question_catalog: QuestionCatalog
     _current_team_index: int
-
+    _categoryControllers: dict[str, CategoryQuestionsControllerBasic]
+    _current_category: CategoryQuestionsControllerBasic | None
 
     def __init__(self):
-        self._question_catalog = QuestionCatalog()
         self._current_team_index = 0
         self._teams_info = {}
+        self._categoryControllers = {}
+        self._path_to_categories = (Path(__file__).parent / "resources" / "game_questions")
+        self._current_category = None
 
-    def get_category_list(self) -> list[str]:
-        return self._question_catalog.get_category_list()
+        self._load_categories()
 
-    def set_current_category(self, selected_category: str):
-        return self._question_catalog.set_current_category(selected_category)
-        
-    def get_selected_category(self) -> str | None:
-        return self._question_catalog.get_selected_category()
-
-    def get_current_questions(self) -> list[str]:
-        """Передает список вопросов"""
-        return self._question_catalog.get_current_questions()
-
-    def get_prices(self) -> list[int]:
-        """Передает цены вопросов"""
-        return self._question_catalog.get_prices()
-
-    def get_variants_for_question(self, question: str) -> list[str]:
-        """Get the variants for a question."""
-        return self._question_catalog.get_variants_for_question(question)
-    
-    def set_teams(self, teams: list[str]):
-        self._teams_info = {name: Team(name) for name in teams}
 
     def reset_game(self):
         """Сбрасывает состояние игры"""
         self._teams_info = {}
         self._current_team_index = 0
+
+    def set_teams(self, teams: list[str]):
+        self._teams_info = {name: Team(name) for name in teams}
 
     def get_team_list(self) -> list[str]:
         """List all teams in the game."""
@@ -74,22 +60,56 @@ class Game:
         """Передает общий счет команды по запросу"""
         return self._teams_info[team_name].score
 
-    def get_question_position(self, price: int) -> list[int]:
-        if price <= 300:
-            return [1, int(price/100)]
-        elif price <= 600:
-            return [2, int(price/100)-3]
-        else:
-            return [3, int(price/100)-6]
+    def get_category_list(self) -> list[str]:
+        return list(self._categoryControllers.keys())
 
-    # def get_row_name(self) -> str:
+    def set_current_category(self, selected_category: str):
+        self._current_category = self._categoryControllers[selected_category]
+        
+    def get_selected_category(self) -> str | None:
+        return self._current_category.get_category_name() if self._current_category else None
+    
+    def get_current_questions(self) -> list[str]:
+        """Передает список вопросов"""
+        if self._current_category is None:
+            raise Exception("No selected category")
+        return self._current_category.get_questions()
 
+    def get_prices(self) -> list[int]:
+        """Передает цены вопросов"""
+        if self._current_category is None:
+            raise Exception("No selected category")
+        return self._current_category.get_prices()
 
+    def get_questions(self) -> list[str]:
+        if self._current_category is None:
+            raise Exception("No selected category")
+        return self._current_category.get_questions()
+    
+    def get_question_position(self, question: str) -> Position:
+        if self._current_category is None:
+            raise Exception("No selected category")
+        return self._current_category.get_question_position(question)
+
+    def get_row_name(self, row: int) -> str:
+        if self._current_category is None:
+            raise Exception("No selected category")
+        return self._current_category.get_row_name(row)
+    
+    def get_variants_for_question(self, question: str) -> list[str]:
+        """Get the variants for a question."""
+        if self._current_category is None:
+            raise Exception("No selected category")
+        return self._current_category.get_variants_for_question(question)
+    
     def submit_answer(self, question: str, answer: str, price: int) -> bool:
         """Submit an answer for a question. Returns True if the answer is correct, False otherwise."""
-        is_correct = self._question_catalog._get_current_questions_data()[question].correct_answer == answer
+        if self._current_category is None:
+            raise Exception("No selected category")
+        
+        is_correct = self._current_category.get_correct_answer(question) == answer
         self._update_score(price, is_correct)
-        self._question_catalog.mark_question_used(question)
+        self._current_category.mark_question_used(question)
         return is_correct
 
     def is_used(self, question: str) -> bool:
