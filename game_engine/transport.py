@@ -40,7 +40,11 @@ def handle_game_message(message: str, game: Any) -> str:
         # Call the method
         game_method = getattr(game, method)
         result = game_method(*args)
-        
+
+        # Convert to dict if object has to_dict method
+        if hasattr(result, 'to_dict') and callable(result.to_dict):
+            result = result.to_dict()
+                
         # Return success response
         return json.dumps({
             "id": msg_id,

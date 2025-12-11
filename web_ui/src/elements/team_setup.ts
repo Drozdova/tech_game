@@ -98,10 +98,8 @@ export class TeamSetup {
     this.teams = [];
     
     inputs.forEach(input => {
-      const teamName = input.value.trim();
-      if (teamName) {
-        this.teams.push(teamName);
-      }
+      const teamName = input.value.trim() || input.placeholder.trim();
+      this.teams.push(teamName);
     });
 
     // Validate
@@ -144,13 +142,8 @@ export class TeamSetup {
 
     // Group inputs by their trimmed lowercase value (preserve order)
     inputs.forEach(input => {
-      const name = input.value.trim().toLowerCase();
-      if (name) {
-        if (!names.has(name)) {
-          names.set(name, []);
-        }
-        names.get(name)!.push(input);
-      }
+      const teamName = input.value.trim() || input.placeholder.trim();
+      this.teams.push(teamName);      
     });
 
     // Reset all inputs first
