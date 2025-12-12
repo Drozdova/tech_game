@@ -86,34 +86,33 @@ class CategoryQuestionsController:
     def _column_from_price(self, price: int) -> int:
         return self.transform_price(price) % 3
 
-    def _load_questions(self, category_folder) -> list[QuestionInfo]:
-        files = list(category_folder.glob("*.json"))
-        if len(files) != 9:
-            raise Exception(
-                f"Expected exactly 9 question files, but found {len(files)}."
-            )
-
-        questions = []
-
-        for file in files:
-            questions.append(self._load_from_json_file(file))
-
-        return questions
-
     def _load_from_json_file(self, path) -> QuestionInfo:
         price = int(path.stem)
         with open(path, encoding="utf-8") as file:
             data = json.load(file)
-            return QuestionInfo(
-                data["title"], price, data["correct_answer"], data["variants"]
-            )
+            return QuestionInfo(data["title"], price, data["correct_answer"], data["variants"])
 
+    def _get_question_files(self, folder: Path) -> list[Path]:
+        return list(folder.glob("*.json"))
+    
+    def _read_questions(self, files: list[Path]) -> list[QuestionInfo]:
+        return [self._load_from_json_file(file) for file in files]
+    
+    def _load_questions(self, folder: Path) -> list[QuestionInfo]:
+        
+        files = self._get_question_files(folder)
+        
+        if len(files) != 9:
+            raise Exception(f"Expected exactly 9 question files, but found {len(files)}.")
+
+        return self._read_questions(files)
 
 class SubfoldersCategoryController(CategoryQuestionsController):
     _subcategories_data: dict[str, dict[str, QuestionInfo]]
 
     def __init__(self, category_parent_folder: Path) -> None:
         super().__init__(category_parent_folder)
+        
 
     def get_question_position(self, question: str) -> Position:
         for row, questions in enumerate(self._subcategories_data.values()):
@@ -130,20 +129,20 @@ class SubfoldersCategoryController(CategoryQuestionsController):
 
         return list(self._subcategories_data.keys())[row]
 
-    def _load_questions(self, category_folder) -> list[QuestionInfo]:
-        questions = []
+    def _load_questions(self, folder) -> list[QuestionInfo]:
+        self._subcategories_data = {}
 
-        for folder in category_folder.iterdir():
-            files_path_lst = list(folder.glob("*.json"))
-            self._subcategories_data[folder.stem] = {}
-            category_questions = self._subcategories_data[folder.stem]
-
-            if len(files_path_lst) != 3:
+        for subfolder in folder.iterdir():
+            files = self._get_question_files(subfolder)
+            
+            if len(files) != 3:
                 raise Exception("More than 3 questions")
+            
+            questions = self._read_questions(files)
+            self._subcategories_data[subfolder.stem] = {q.title: q for q in questions}
 
-            for file_path in files_path_lst:
-                question_info = self._load_from_json_file(file_path)
-                category_questions[question_info.title] = question_info
-                questions.append(question_info)
+        all_questions = []
+        for subcategory in self._subcategories_data.values():
+            all_questions += subcategory.values()
 
-        return questions
+        return all_questions
