@@ -116,12 +116,13 @@ class SubfoldersCategoryController(CategoryQuestionsController):
         super().__init__(category_parent_folder)
 
     def get_question_position(self, question: str) -> Position:
-        for i, category in enumerate(self._subcategories_data):
-            if question in self._subcategories_data[category]:
-                return Position(
-                    i, self._column_from_price(self._questions[question].price)
-                )
-        raise Exception("Question not found")
+        for row, questions in enumerate(self._subcategories_data.values()):
+            if question in questions:
+                price = self._questions[question].price
+                column = self._column_from_price(price)
+                return Position(row, column)
+
+        raise ValueError(f"Question '{question}' not found in any subcategory.")
 
     def get_row_name(self, row: int) -> str:
         if len(self._subcategories_data) <= row:

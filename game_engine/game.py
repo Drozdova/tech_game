@@ -17,14 +17,13 @@ class Game:
 
     _teams: dict[str, Team]
     _current_team_index: int
-    _categoryControllers: dict[str, CategoryQuestionsController]
+    _category_controllers: dict[str, CategoryQuestionsController]
     _current_category: CategoryQuestionsController | None
 
     def __init__(self):
         self._current_team_index = 0
         self._teams = {}
-        self._categoryControllers = {}
-        self._path_to_categories = (Path(__file__).parent / "resources" / "game_questions")
+        self._category_controllers = {}
         self._current_category = None
 
         self._load_categories()
@@ -63,13 +62,13 @@ class Game:
         return self._teams[team_name].score
 
     def get_category_list(self) -> list[str]:
-        return list(self._categoryControllers.keys())
+        return list(self._category_controllers.keys())
 
     def set_current_category(self, selected_category: str):
-        if selected_category not in self._categoryControllers.keys():
+        if selected_category not in self._category_controllers.keys():
             raise Exception("Category not found")
 
-        self._current_category = self._categoryControllers[selected_category]
+        self._current_category = self._category_controllers[selected_category]
         
     def get_selected_category(self) -> str | None:
         return self._current_category.get_category_name() if self._current_category else None
@@ -106,12 +105,12 @@ class Game:
         return self._get_current_category().get_question_flag(question)
 
     def _load_categories(self):
-        for folder in self._path_to_categories.iterdir():
+        for folder in (Path(__file__).parent / "resources" / "game_questions").iterdir():
             if any(item.is_dir() for item in folder.iterdir()):
                 category = SubfoldersCategoryController(folder)
             else:
                 category = CategoryQuestionsController(folder)
-            self._categoryControllers[folder.stem] = category
+            self._category_controllers[folder.stem] = category
 
     def _get_current_category(self) -> CategoryQuestionsController:
         if self._current_category is None:
