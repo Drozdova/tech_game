@@ -1,6 +1,7 @@
 /**
  * PriceBoard - Page displaying question prices as buttons
  * After selecting a category, shows prices. Clicking a price opens the question.
+ * Uses grid positions from backend (row, col)
  */
 
 import { GameEngine } from '../game_engine.js';
@@ -8,7 +9,9 @@ import { GameEngine } from '../game_engine.js';
 export class PriceBoard {
   el: HTMLElement;
   private pricesContainer: HTMLElement;
+  private rowLabels: Map<number, HTMLElement> = new Map();
   private onPriceSelectCallback: ((question: string, price: number) => void) | null = null;
+  private gridCells: Map<string, HTMLElement> = new Map();
 
   constructor() {
     // Create main container
@@ -21,12 +24,22 @@ export class PriceBoard {
     title.textContent = 'Выберите вопрос';
     this.el.appendChild(title);
 
-    // Create prices grid container
-    this.pricesContainer = document.createElement('div');
-    this.pricesContainer.className = 'prices-grid';
-    this.el.appendChild(this.pricesContainer);
+    // Create table wrapper (centered)
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'prices-table-wrapper';
 
-    // Load prices
+    // Create HTML table
+    const table = document.createElement('table');
+    table.className = 'prices-table';
+    this.pricesContainer = table;
+    
+    // Table body will be created dynamically based on row count
+    const tbody = document.createElement('tbody');
+    table.appendChild(tbody);
+    tableWrapper.appendChild(table);
+    this.el.appendChild(tableWrapper);
+
+    // Load prices (will create table structure dynamically)
     this.loadPrices();
   }
 
@@ -34,31 +47,105 @@ export class PriceBoard {
    * Load prices from server and display them
    */
   private loadPrices(): void {
-    this.pricesContainer.innerHTML = '<div class="loading-text">Загрузка...</div>';
+    // Show loading message
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-text';
+    loadingDiv.textContent = 'Загрузка вопросов...';
+    this.el.appendChild(loadingDiv);
 
-    // Load questions list and prices
-    GameEngine.call('get_current_questions', [], (questionsResult, questionsError) => {
-      if (questionsError) {
-        this.pricesContainer.innerHTML = `<div class="error-text">Ошибка: ${questionsError}</div>`;
+    // First, get row count from backend to create table structure
+    GameEngine.call('get_row_count', [], (rowCountResult, rowCountError) => {
+      // Remove loading message
+      loadingDiv.remove();
+
+      if (rowCountError) {
+        console.error('Failed to get row count:', rowCountError);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-text';
+        errorDiv.textContent = `Ошибка загрузки количества строк: ${rowCountError}`;
+        this.el.appendChild(errorDiv);
         return;
       }
 
-      GameEngine.call('get_prices', [], (pricesResult, pricesError) => {
-        if (pricesError) {
-          this.pricesContainer.innerHTML = `<div class="error-text">Ошибка: ${pricesError}</div>`;
+      const totalRows = rowCountResult as number;
+      console.log('Row count received:', totalRows);
+      
+      if (totalRows <= 0) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-text';
+        errorDiv.textContent = 'Нет строк для отображения';
+        this.el.appendChild(errorDiv);
+        return;
+      }
+      
+      // Create table structure with correct number of rows
+      this.createTableStructure(totalRows);
+      
+      // Load row names
+      this.loadRowNames(totalRows);
+      
+      // Load questions and prices
+      GameEngine.call('get_current_questions', [], (questionsResult, questionsError) => {
+        if (questionsError) {
+          console.error('Failed to get questions:', questionsError);
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-text';
+          errorDiv.textContent = `Ошибка загрузки вопросов: ${questionsError}`;
+          this.el.appendChild(errorDiv);
           return;
         }
 
-        this.pricesContainer.innerHTML = '';
+        GameEngine.call('get_prices', [], (pricesResult, pricesError) => {
+          if (pricesError) {
+            console.error('Failed to get prices:', pricesError);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-text';
+            errorDiv.textContent = `Ошибка загрузки цен: ${pricesError}`;
+            this.el.appendChild(errorDiv);
+            return;
+          }
 
-        const questions = questionsResult as string[];
-        const prices = pricesResult as number[];
+          const questions = questionsResult as string[];
+          const prices = pricesResult as number[];
 
-        // Check each question if it's used and create price cards
-        questions.forEach((questionTitle, index) => {
-          GameEngine.call('is_used', [questionTitle], (usedResult, usedError) => {
-            const isUsed = usedResult as boolean;
-            this.createPriceCard(questionTitle, prices[index], isUsed);
+          console.log('Questions loaded:', questions.length, 'Prices loaded:', prices.length);
+
+          if (questions.length === 0) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-text';
+            errorDiv.textContent = 'Нет вопросов в выбранной категории';
+            this.el.appendChild(errorDiv);
+            return;
+          }
+
+          // Process each question
+          questions.forEach((questionTitle, index) => {
+            const price = prices[index];
+            
+            // Get position from backend
+            GameEngine.call('get_question_position', [questionTitle], (posResult, posError) => {
+              if (posError) {
+                console.error('Failed to get position for question:', questionTitle, posError);
+                return;
+              }
+              
+              const position = posResult as {row: number, column: number};
+              // Backend returns 0-based indices, UI uses 1-based, so add 1
+              const row = position.row + 1;
+              const col = position.column + 1;
+              
+              console.log(`Question "${questionTitle}" at row ${row}, col ${col}, price ${price}`);
+              
+              // Check if used
+              GameEngine.call('is_used', [questionTitle], (usedResult, usedError) => {
+                if (usedError) {
+                  console.error('Failed to check if used for question:', questionTitle, usedError);
+                  return;
+                }
+                const isUsed = usedResult as boolean;
+                this.fillCell(row, col, questionTitle, price, isUsed);
+              });
+            });
           });
         });
       });
@@ -66,25 +153,122 @@ export class PriceBoard {
   }
 
   /**
-   * Create a price card
+   * Create table structure with specified number of rows
    */
-  private createPriceCard(questionTitle: string, price: number, isUsed: boolean): void {
-    const card = document.createElement('div');
-    card.className = 'price-card';
+  private createTableStructure(totalRows: number): void {
+    const tbody = this.pricesContainer.querySelector('tbody');
+    if (!tbody) return;
+
+    // Clear any existing rows
+    tbody.innerHTML = '';
+    this.rowLabels.clear();
+    this.gridCells.clear();
+
+    // Create rows with row headers and cells
+    for (let row = 1; row <= totalRows; row++) {
+      const tr = document.createElement('tr');
+      
+      // Create row header (th)
+      const rowHeader = document.createElement('th');
+      rowHeader.className = 'row-label';
+      rowHeader.dataset.row = String(row);
+      rowHeader.scope = 'row';
+      tr.appendChild(rowHeader);
+      this.rowLabels.set(row, rowHeader);
+      
+      // Create cells for this row (td) - always 3 columns
+      for (let col = 1; col <= 3; col++) {
+        const cell = document.createElement('td');
+        const cellDiv = document.createElement('div');
+        cellDiv.className = 'price-card empty';
+        cellDiv.dataset.row = String(row);
+        cellDiv.dataset.col = String(col);
+        cell.appendChild(cellDiv);
+        tr.appendChild(cell);
+        this.gridCells.set(`${row}-${col}`, cellDiv);
+      }
+      
+      tbody.appendChild(tr);
+    }
+  }
+
+  /**
+   * Load row names from backend and display them
+   */
+  private loadRowNames(totalRows: number): void {
+    let loadedCount = 0;
+    
+    // Load names for all rows (backend uses 0-based, UI uses 1-based)
+    for (let row = 0; row < totalRows; row++) {
+      GameEngine.call('get_row_name', [row], (nameResult, nameError) => {
+        if (nameError) {
+          console.error(`Failed to get row name for row ${row}:`, nameError);
+          loadedCount++;
+          // Still check if all loaded even if some failed
+          if (loadedCount === totalRows) {
+            this.adjustTableCentering();
+          }
+          return;
+        }
+        
+        const rowName = nameResult as string;
+        const rowLabel = this.rowLabels.get(row + 1); // UI uses 1-based
+        if (rowLabel) {
+          rowLabel.textContent = rowName;
+        }
+        
+        loadedCount++;
+        // After all row names are loaded, adjust table centering
+        if (loadedCount === totalRows) {
+          this.adjustTableCentering();
+        }
+      });
+    }
+  }
+
+  /**
+   * Adjust table centering by applying negative transform translateX
+   * equal to half the width of the first column (row labels)
+   * This shifts the table relative to its current centered position
+   */
+  private adjustTableCentering(): void {
+    // Wait for browser to render the table with text content
+    requestAnimationFrame(() => {
+      const firstRowLabel = this.rowLabels.get(1);
+      if (!firstRowLabel) return;
+
+      // Get actual width of the first column (th element)
+      const firstColumnWidth = firstRowLabel.offsetWidth;
+      
+      // Apply negative transform translateX equal to half the column width
+      // This shifts the table relative to its current centered position
+      const table = this.pricesContainer as HTMLTableElement;
+      if (table) {
+        table.style.transform = `translateX(-${firstColumnWidth / 2}px)`;
+      }
+    });
+  }
+
+  /**
+   * Fill a grid cell with question data
+   */
+  private fillCell(row: number, col: number, questionTitle: string, price: number, isUsed: boolean): void {
+    const cell = this.gridCells.get(`${row}-${col}`);
+    if (!cell) return;
+
+    cell.classList.remove('empty');
     
     if (isUsed) {
-      card.classList.add('used');
-      card.textContent = '';
+      cell.classList.add('used');
+      cell.textContent = '';
     } else {
-      card.textContent = `${price}`;
-      card.onclick = () => {
+      cell.textContent = `${price}`;
+      cell.onclick = () => {
         if (this.onPriceSelectCallback) {
           this.onPriceSelectCallback(questionTitle, price);
         }
       };
     }
-
-    this.pricesContainer.appendChild(card);
   }
 
   /**
