@@ -32,19 +32,15 @@ class Position:
 
 class CategoryQuestionsController:
     _questions: _QuestionsDict
-    category_name: str
+    _category_name: str
 
     def __init__(self, category_folder: Path) -> None:
         questions = self._load_questions(category_folder)
         self._questions = {q.title: q for q in questions}
-        self.category_name = category_folder.stem
+        self._category_name = category_folder.stem
 
     def get_questions(self) -> list[str]:
         return list(self._questions.keys())
-
-    def _validate_question(self, title) -> None:
-        if title not in self._questions.keys():
-            raise Exception("Question not found")
 
     def get_variants_for_question(self, question: str) -> list[str]:
         self._validate_question(question)
@@ -84,10 +80,14 @@ class CategoryQuestionsController:
         self._questions[question].used = True
 
     def get_category_name(self) -> str:
-        return self.category_name
+        return self._category_name
 
     def transform_price(self, price: int) -> int:
         return int((price) / 100) - 1
+
+    def _validate_question(self, title) -> None:
+        if title not in self._questions.keys():
+            raise Exception("Question not found")
 
     def _column_from_price(self, price: int) -> int:
         return self.transform_price(price) % 3

@@ -52,10 +52,6 @@ class Game:
         """Передаёт название команды, которая должна ходить"""
         return self.get_team_list()[self._current_team_index]
 
-    def _update_score(self, price: int, is_correct: bool):
-        current_team = self._teams[self.get_current_team()]
-        current_team.score += price if is_correct else -price
-
     def get_team_score(self, team_name: str) -> int:
         """Передает общий счет команды по запросу"""
         return self._teams[team_name].score
@@ -103,6 +99,10 @@ class Game:
     def is_used(self, question: str) -> bool:
         return self._get_current_category().get_question_flag(question)
 
+    def _update_score(self, price: int, is_correct: bool):
+        current_team = self._teams[self.get_current_team()]
+        current_team.score += price if is_correct else -price
+    
     def _load_categories(self):
         self._category_controllers = {}
         for folder in (Path(__file__).parent / "resources" / "game_questions").iterdir():
