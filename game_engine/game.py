@@ -82,6 +82,9 @@ class Game:
     def get_question_position(self, question: str) -> Position:
         return self._get_current_category().get_question_position(question)
 
+    def get_row_count(self) -> int:
+        return self._get_current_category().get_row_count()
+    
     def get_row_name(self, row: int) -> str:
         return self._get_current_category().get_row_name(row)
     

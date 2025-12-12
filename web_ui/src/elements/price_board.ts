@@ -33,11 +33,139 @@ export class PriceBoard {
     table.className = 'prices-table';
     this.pricesContainer = table;
     
-    // Create table body
+    // Table body will be created dynamically based on row count
     const tbody = document.createElement('tbody');
-    
-    // Pre-create rows with row headers and cells for 3x3 grid
-    for (let row = 1; row <= 3; row++) {
+    table.appendChild(tbody);
+    tableWrapper.appendChild(table);
+    this.el.appendChild(tableWrapper);
+
+    // Load prices (will create table structure dynamically)
+    this.loadPrices();
+  }
+
+  /**
+   * Load prices from server and display them
+   */
+  private loadPrices(): void {
+    // Show loading message
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-text';
+    loadingDiv.textContent = 'Загрузка вопросов...';
+    this.el.appendChild(loadingDiv);
+
+    // First, get row count from backend to create table structure
+    GameEngine.call('get_row_count', [], (rowCountResult, rowCountError) => {
+      // Remove loading message
+      loadingDiv.remove();
+
+      if (rowCountError) {
+        console.error('Failed to get row count:', rowCountError);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-text';
+        errorDiv.textContent = `Ошибка загрузки количества строк: ${rowCountError}`;
+        this.el.appendChild(errorDiv);
+        return;
+      }
+
+      const totalRows = rowCountResult as number;
+      console.log('Row count received:', totalRows);
+      
+      if (totalRows <= 0) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-text';
+        errorDiv.textContent = 'Нет строк для отображения';
+        this.el.appendChild(errorDiv);
+        return;
+      }
+      
+      // Create table structure with correct number of rows
+      this.createTableStructure(totalRows);
+      
+      // Load row names
+      this.loadRowNames(totalRows);
+      
+      // Load questions and prices
+      GameEngine.call('get_current_questions', [], (questionsResult, questionsError) => {
+        if (questionsError) {
+          console.error('Failed to get questions:', questionsError);
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error-text';
+          errorDiv.textContent = `Ошибка загрузки вопросов: ${questionsError}`;
+          this.el.appendChild(errorDiv);
+          return;
+        }
+
+        GameEngine.call('get_prices', [], (pricesResult, pricesError) => {
+          if (pricesError) {
+            console.error('Failed to get prices:', pricesError);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-text';
+            errorDiv.textContent = `Ошибка загрузки цен: ${pricesError}`;
+            this.el.appendChild(errorDiv);
+            return;
+          }
+
+          const questions = questionsResult as string[];
+          const prices = pricesResult as number[];
+
+          console.log('Questions loaded:', questions.length, 'Prices loaded:', prices.length);
+
+          if (questions.length === 0) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-text';
+            errorDiv.textContent = 'Нет вопросов в выбранной категории';
+            this.el.appendChild(errorDiv);
+            return;
+          }
+
+          // Process each question
+          questions.forEach((questionTitle, index) => {
+            const price = prices[index];
+            
+            // Get position from backend
+            GameEngine.call('get_question_position', [questionTitle], (posResult, posError) => {
+              if (posError) {
+                console.error('Failed to get position for question:', questionTitle, posError);
+                return;
+              }
+              
+              const position = posResult as {row: number, column: number};
+              // Backend returns 0-based indices, UI uses 1-based, so add 1
+              const row = position.row + 1;
+              const col = position.column + 1;
+              
+              console.log(`Question "${questionTitle}" at row ${row}, col ${col}, price ${price}`);
+              
+              // Check if used
+              GameEngine.call('is_used', [questionTitle], (usedResult, usedError) => {
+                if (usedError) {
+                  console.error('Failed to check if used for question:', questionTitle, usedError);
+                  return;
+                }
+                const isUsed = usedResult as boolean;
+                this.fillCell(row, col, questionTitle, price, isUsed);
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  /**
+   * Create table structure with specified number of rows
+   */
+  private createTableStructure(totalRows: number): void {
+    const tbody = this.pricesContainer.querySelector('tbody');
+    if (!tbody) return;
+
+    // Clear any existing rows
+    tbody.innerHTML = '';
+    this.rowLabels.clear();
+    this.gridCells.clear();
+
+    // Create rows with row headers and cells
+    for (let row = 1; row <= totalRows; row++) {
       const tr = document.createElement('tr');
       
       // Create row header (th)
@@ -48,7 +176,7 @@ export class PriceBoard {
       tr.appendChild(rowHeader);
       this.rowLabels.set(row, rowHeader);
       
-      // Create cells for this row (td)
+      // Create cells for this row (td) - always 3 columns
       for (let col = 1; col <= 3; col++) {
         const cell = document.createElement('td');
         const cellDiv = document.createElement('div');
@@ -62,83 +190,24 @@ export class PriceBoard {
       
       tbody.appendChild(tr);
     }
-    
-    table.appendChild(tbody);
-    tableWrapper.appendChild(table);
-    this.el.appendChild(tableWrapper);
-
-    // Load prices
-    this.loadPrices();
-  }
-
-  /**
-   * Load prices from server and display them
-   */
-  private loadPrices(): void {
-    // Load row names first
-    this.loadRowNames();
-    
-    // Load questions list and prices
-      GameEngine.call('get_current_questions', [], (questionsResult, questionsError) => {
-        if (questionsError) {
-          const errorDiv = document.createElement('div');
-          errorDiv.className = 'error-text';
-          errorDiv.textContent = `Ошибка: ${questionsError}`;
-          this.el.appendChild(errorDiv);
-          return;
-        }
-
-        GameEngine.call('get_prices', [], (pricesResult, pricesError) => {
-          if (pricesError) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-text';
-            errorDiv.textContent = `Ошибка: ${pricesError}`;
-            this.el.appendChild(errorDiv);
-            return;
-          }
-
-        const questions = questionsResult as string[];
-        const prices = pricesResult as number[];
-
-        // For each question, get position and fill the grid
-        questions.forEach((questionTitle, index) => {
-          const price = prices[index];
-          
-          // Get position from backend
-          GameEngine.call('get_question_position', [questionTitle], (posResult, posError) => {
-            if (posError) {
-              console.error('Failed to get position:', posError);
-              return;
-            }
-            
-            const position = posResult as {row: number, column: number};
-            // Backend returns 0-based indices, UI uses 1-based, so add 1
-            const row = position.row + 1;
-            const col = position.column + 1;
-            
-            // Check if used
-            GameEngine.call('is_used', [questionTitle], (usedResult, usedError) => {
-              const isUsed = usedResult as boolean;
-              this.fillCell(row, col, questionTitle, price, isUsed);
-            });
-          });
-        });
-      });
-    });
   }
 
   /**
    * Load row names from backend and display them
    */
-  private loadRowNames(): void {
+  private loadRowNames(totalRows: number): void {
     let loadedCount = 0;
-    const totalRows = 3;
     
-    // Load names for rows 0, 1, 2 (backend uses 0-based)
+    // Load names for all rows (backend uses 0-based, UI uses 1-based)
     for (let row = 0; row < totalRows; row++) {
       GameEngine.call('get_row_name', [row], (nameResult, nameError) => {
         if (nameError) {
           console.error(`Failed to get row name for row ${row}:`, nameError);
+          loadedCount++;
+          // Still check if all loaded even if some failed
+          if (loadedCount === totalRows) {
+            this.adjustTableCentering();
+          }
           return;
         }
         

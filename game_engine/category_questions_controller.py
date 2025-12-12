@@ -63,6 +63,9 @@ class CategoryQuestionsController:
             self._transform_price(price) // 3, self._column_from_price(price)
         )
 
+    def get_row_count(self) -> int:
+        return 3
+
     def get_row_name(self, row: int) -> str:
         if row == 0:
             return "easy"
@@ -127,6 +130,9 @@ class SubcategoriesQuestionController(CategoryQuestionsController):
 
         raise ValueError(f"Question '{question}' not found in any subcategory.")
 
+    def get_row_count(self) -> int:
+        return len(self._subcategories_data)
+    
     def get_row_name(self, row: int) -> str:
         if len(self._subcategories_data) <= row:
             raise Exception("Wrong row given")
