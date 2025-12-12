@@ -57,7 +57,7 @@ class Game:
         return list(self._category_controllers.keys())
 
     def set_current_category(self, selected_category: str):
-        if selected_category not in self._category_controllers.keys():
+        if selected_category not in self._category_controllers:
             raise Exception("Category not found")
 
         self._current_category = self._category_controllers[selected_category]
