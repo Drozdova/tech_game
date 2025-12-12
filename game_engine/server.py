@@ -46,10 +46,16 @@ class GameServer:
         
         try:
             async for message in websocket:
+                # Decode message if it's bytes
+                if isinstance(message, bytes):
+                    message_str = message.decode('utf-8')
+                else:
+                    message_str = message
+                
                 # Call the registered callback (synchronous function)
                 response = None
                 if self.on_message_callback:
-                    response = self.on_message_callback(message)
+                    response = self.on_message_callback(message_str)
                 
                 if response:
                     await websocket.send(response)
@@ -62,7 +68,16 @@ class GameServer:
         
         This is an async method that should be added to the App event loop.
         """
-        self.server = await websockets.serve(self._handler, self.host, self.port)
-        print(f"Server started at ws://{self.host}:{self.port}")
+        # Allow connections from any origin (for local network access)
+        self.server = await websockets.serve(
+            self._handler, 
+            self.host, 
+            self.port,
+            ping_interval=None,  # Disable ping to avoid connection issues
+            ping_timeout=None
+        )
+        display_host = "localhost" if self.host == "0.0.0.0" else self.host
+        print(f"Server started at ws://{display_host}:{self.port}")
+        print(f"Listening on {self.host}:{self.port} (accessible from network)")
         await self.server.wait_closed()
 

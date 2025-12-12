@@ -81,7 +81,7 @@ body::after {
 #app {
   width: 100%;
   min-height: 100vh;
-  padding: 30px;
+  padding: 200px 30px 30px 30px;
   position: relative;
   z-index: 1;
 }
@@ -836,6 +836,51 @@ body::after {
   margin-top: 15px;
 }
 
+/* Result Container */
+.result-container {
+  margin-top: 30px;
+  padding: 20px 25px;
+  border-radius: 4px;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+.result-container.result-correct {
+  background: rgba(0, 255, 136, 0.15);
+  border: 2px solid var(--success-green);
+}
+
+.result-container.result-incorrect {
+  background: rgba(255, 71, 87, 0.15);
+  border: 2px solid var(--error-red);
+}
+
+.result-container.result-error {
+  background: rgba(255, 71, 87, 0.15);
+  border: 2px solid var(--error-red);
+}
+
+.result-message {
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.result-container.result-correct .result-message {
+  color: var(--success-green);
+  text-shadow: var(--glow-green);
+}
+
+.result-container.result-incorrect .result-message {
+  color: var(--error-red);
+}
+
+.result-container.result-error .result-message {
+  color: var(--error-red);
+}
+
 /* ============================================
    ANIMATIONS
    ============================================ */
@@ -906,7 +951,7 @@ body::after {
    ============================================ */
 @media (max-width: 768px) {
   #app {
-    padding: 15px;
+    padding: 40px 15px 15px 15px;
   }
   
   .category-title,

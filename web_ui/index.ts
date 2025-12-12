@@ -17,6 +17,33 @@ import { PriceBoard } from './src/elements/price_board.js';
 import { QuestionPage } from './src/elements/question_page.js';
 import { ScorePage } from './src/elements/score_page.js';
 
+/**
+ * Get WebSocket URL from various sources
+ * Priority:
+ * 1. URL parameter (?ws=ws://example.com:8000)
+ * 2. Environment variable (if available)
+ * 3. Auto-detect from current host
+ * 4. Fallback to localhost:8000
+ */
+function getWebSocketUrl(): string {
+  // Check URL parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const wsParam = urlParams.get('ws');
+  if (wsParam) {
+    return wsParam;
+  }
+
+  // Auto-detect from current host
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const hostname = window.location.hostname;
+  const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+  
+  // Use port 8000 for WebSocket (different from HTTP port)
+  const wsPort = '8000';
+  
+  return `${protocol}//${hostname}:${wsPort}`;
+}
+
 // Get app container
 const appContainer = document.getElementById('app');  
 if (!appContainer) {
@@ -101,7 +128,9 @@ const showTeamSetup = () => {
 };
 
 // Step 1: Connect to WebSocket
-GameEngine.connect('ws://localhost:8000', () => { 
+const wsUrl = getWebSocketUrl();
+console.log('Connecting to WebSocket:', wsUrl);
+GameEngine.connect(wsUrl, () => { 
   console.log('Connected! Loading templates...');
   appContainer.innerHTML = '<div class="loading">Loading templates...</div>';
 

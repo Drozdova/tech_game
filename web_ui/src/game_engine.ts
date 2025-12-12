@@ -34,7 +34,7 @@ class GameEngineClass {
     this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
-      console.log('Connected to game server');
+      console.log('Connected to game server at', url);
       this.connected = true;
       onConnected();
     };
@@ -44,11 +44,16 @@ class GameEngineClass {
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('WebSocket error connecting to', url, ':', error);
+      console.error('Make sure:');
+      console.error('1. Server is running and listening on 0.0.0.0 (not localhost)');
+      console.error('2. Firewall allows connections on port 8000');
+      console.error('3. Server address is correct');
     };
 
-    this.ws.onclose = () => {
+    this.ws.onclose = (event) => {
       console.log('Disconnected from game server');
+      console.log('Close code:', event.code, 'Reason:', event.reason || 'No reason provided');
       this.connected = false;
     };
   }

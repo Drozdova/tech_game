@@ -9,6 +9,7 @@ export class QuestionPage {
   private questionTitle: string;
   private questionPrice: number;
   private variantsContainer: HTMLElement;
+  private resultContainer: HTMLElement;
   private onAnswerCallback: ((isCorrect: boolean) => void) | null = null;
 
   constructor(questionTitle: string, questionPrice: number) {
@@ -29,6 +30,11 @@ export class QuestionPage {
     this.variantsContainer = document.createElement('div');
     this.variantsContainer.className = 'variants-container';
     this.el.appendChild(this.variantsContainer);
+
+    // Create result container
+    this.resultContainer = document.createElement('div');
+    this.resultContainer.className = 'result-container';
+    this.el.appendChild(this.resultContainer);
 
     // Load variants
     this.loadVariants();
@@ -94,7 +100,7 @@ export class QuestionPage {
     // Submit answer to server
     GameEngine.call('submit_answer', [this.questionTitle, answer, this.questionPrice], (result, error) => {
       if (error) {
-        alert(`Ошибка: ${error}`);
+        this.showResult(`Ошибка: ${error}`, 'error');
         allButtons.forEach(btn => {
           (btn as HTMLButtonElement).disabled = false;
         });
@@ -105,22 +111,35 @@ export class QuestionPage {
       
       if (isCorrect) {
         button.classList.add('correct');
+        this.showResult('Правильно!', 'correct');
         setTimeout(() => {
-          alert('Правильно! 🎉');
           if (this.onAnswerCallback) {
             this.onAnswerCallback(true);
           }
-        }, 500);
+        }, 2000);
       } else {
         button.classList.add('incorrect');
+        this.showResult('Неправильно', 'incorrect');
         setTimeout(() => {
-          alert('Неправильно 😢');
           if (this.onAnswerCallback) {
             this.onAnswerCallback(false);
           }
-        }, 500);
+        }, 2000);
       }
     });
+  }
+
+  /**
+   * Show result message
+   */
+  private showResult(message: string, type: 'correct' | 'incorrect' | 'error'): void {
+    this.resultContainer.innerHTML = '';
+    this.resultContainer.className = `result-container result-${type}`;
+    
+    const resultMessage = document.createElement('div');
+    resultMessage.className = 'result-message';
+    resultMessage.textContent = message;
+    this.resultContainer.appendChild(resultMessage);
   }
 
   /**
