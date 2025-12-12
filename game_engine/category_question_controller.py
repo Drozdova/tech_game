@@ -15,7 +15,7 @@ class QuestionInfo:
 
 # Type aliases
 _QuestionsDict: TypeAlias = Dict[str, QuestionInfo]
-_SubcategoriesData: TypeAlias = Dict[str, Dict[str, QuestionInfo]]
+_SubcategoriesData: TypeAlias = Dict[str, _QuestionsDict]
 
 
 class Position:

@@ -21,18 +21,17 @@ class Game:
     _current_category: CategoryQuestionsController | None
 
     def __init__(self):
-        self._current_team_index = 0
-        self._teams = {}
-        self._category_controllers = {}
-        self._current_category = None
-
-        self._load_categories()
+        self.reset_game()
 
 
     def reset_game(self):
         """Сбрасывает состояние игры"""
         self._teams = {}
         self._current_team_index = 0
+        self._current_category = None
+        self._category_controllers = {}
+        
+        self._load_categories()
 
     def set_teams(self, teams: list[str]):
         if len(teams) < 1:
@@ -44,7 +43,7 @@ class Game:
         return list(self._teams.keys())
 
     def next_team(self):
-        if self._current_team_index == len(self._teams) - 1:
+        if self._current_team_index + 1 > len(self._teams):
             self._current_team_index = 0
         else:
             self._current_team_index += 1
@@ -105,6 +104,7 @@ class Game:
         return self._get_current_category().get_question_flag(question)
 
     def _load_categories(self):
+        self._category_controllers = {}
         for folder in (Path(__file__).parent / "resources" / "game_questions").iterdir():
             if any(item.is_dir() for item in folder.iterdir()):
                 category = SubcategoriesQuestionController(folder)
