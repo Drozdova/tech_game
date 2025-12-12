@@ -3,7 +3,7 @@
 from asyncio import streams
 from pathlib import Path
 from dataclasses import dataclass
-from .category_question_controller import CategoryQuestionsController, SubcategoriesQuestionController, Position
+from .category_questions_controller import CategoryQuestionsController, SubcategoriesQuestionController, Position
 
 
 @dataclass
@@ -97,7 +97,7 @@ class Game:
         return is_correct
 
     def is_used(self, question: str) -> bool:
-        return self._get_current_category().get_question_flag(question)
+        return self._get_current_category().is_question_used(question)
 
     def _update_score(self, price: int, is_correct: bool):
         current_team = self._teams[self.get_current_team()]

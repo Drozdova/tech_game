@@ -42,23 +42,25 @@ class CategoryQuestionsController:
     def get_questions(self) -> list[str]:
         return list(self._questions.keys())
 
+    def _get_question(self, title: str) -> QuestionInfo:
+        if title not in self._questions:
+            raise Exception("Question not found")
+        
+        return self._questions[title]
+    
     def get_variants_for_question(self, question: str) -> list[str]:
-        self._validate_question(question)
-
-        return self._questions[question].variants
+        return self._get_question(question).variants
 
     def get_correct_answer(self, question: str) -> str:
-        return self._questions[question].correct_answer
+        return self._get_question(question).correct_answer
 
-    def get_question_flag(self, question: str) -> bool:
-        return self._questions[question].used
+    def is_question_used(self, question: str) -> bool:
+        return self._get_question(question).used
 
     def get_question_position(self, question: str) -> Position:
-        self._validate_question(question)
-
-        price = self._questions[question].price
+        price = self._get_question(question).price
         return Position(
-            self.transform_price(price) // 3, self._column_from_price(price)
+            self._transform_price(price) // 3, self._column_from_price(price)
         )
 
     def get_row_name(self, row: int) -> str:
@@ -76,21 +78,17 @@ class CategoryQuestionsController:
     def get_prices(self) -> list[int]:
         return [q.price for q in self._questions.values()]
 
-    def mark_question_used(self, question: str) -> bool | None:
-        self._questions[question].used = True
+    def mark_question_used(self, question: str):
+        self._get_question(question).used = True
 
     def get_category_name(self) -> str:
         return self._category_name
 
-    def transform_price(self, price: int) -> int:
+    def _transform_price(self, price: int) -> int:
         return int((price) / 100) - 1
 
-    def _validate_question(self, title) -> None:
-        if title not in self._questions.keys():
-            raise Exception("Question not found")
-
     def _column_from_price(self, price: int) -> int:
-        return self.transform_price(price) % 3
+        return self._transform_price(price) % 3
 
     def _load_from_json_file(self, path: Path) -> QuestionInfo:
         price = int(path.stem)
@@ -123,7 +121,7 @@ class SubcategoriesQuestionController(CategoryQuestionsController):
     def get_question_position(self, question: str) -> Position:
         for row, questions in enumerate(self._subcategories_data.values()):
             if question in questions:
-                price = self._questions[question].price
+                price = self._get_question(question).price
                 column = self._column_from_price(price)
                 return Position(row, column)
 
@@ -131,7 +129,7 @@ class SubcategoriesQuestionController(CategoryQuestionsController):
 
     def get_row_name(self, row: int) -> str:
         if len(self._subcategories_data) <= row:
-            raise Exception("Wrong count of rows")
+            raise Exception("Wrong row given")
 
         return list(self._subcategories_data.keys())[row]
 
