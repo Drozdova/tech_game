@@ -43,10 +43,7 @@ class Game:
         return list(self._teams.keys())
 
     def next_team(self):
-        if self._current_team_index + 1 > len(self._teams):
-            self._current_team_index = 0
-        else:
-            self._current_team_index += 1
+         self._current_team_index = (self._current_team_index + 1) % len(self._teams)
 
     def get_current_team(self) -> str:
         """Передаёт название команды, которая должна ходить"""

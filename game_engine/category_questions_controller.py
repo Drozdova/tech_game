@@ -40,10 +40,6 @@ class CategoryQuestionsController:
         self._questions = {}
         self._set_questions(self._load_questions(category_folder))
 
-    def _set_questions(self, questions: list[QuestionInfo]):
-        self._ensure_questions_unique(questions)
-        self._questions = {q.title: q for q in questions}
-
     def get_questions(self) -> list[str]:
         return list(self._questions.keys())
 
@@ -66,16 +62,13 @@ class CategoryQuestionsController:
         return 3
 
     def get_row_name(self, row: int) -> str:
-        if row == 0:
-            return "easy"
-        elif row == 1:
-            return "medium"
-        elif row == 2:
-            return "hard"
-        else:
+        options = ['easy', 'medium', 'hard']
+        if row >= len(options):
             raise Exception(
                 f"Invalid row index: {row}. Expected 0 (easy), 1 (medium), or 2 (hard)."
             )
+        return options[row]
+        
 
     def get_prices(self) -> list[int]:
         return [q.price for q in self._questions.values()]
@@ -86,6 +79,10 @@ class CategoryQuestionsController:
     def get_category_name(self) -> str:
         return self._category_name
 
+    def _set_questions(self, questions: list[QuestionInfo]):
+        self._ensure_questions_unique(questions)
+        self._questions = {q.title: q for q in questions}
+
     def _get_question(self, title: str) -> QuestionInfo:
         if title not in self._questions:
             raise Exception("Question not found")
@@ -93,7 +90,7 @@ class CategoryQuestionsController:
         return self._questions[title]
 
     def _transform_price(self, price: int) -> int:
-        return int((price) / 100) - 1
+        return int(price / 100) - 1
 
     def _column_from_price(self, price: int) -> int:
         return self._transform_price(price) % 3
