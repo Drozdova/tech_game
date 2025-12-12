@@ -116,8 +116,8 @@ class CategoryQuestionsController:
 class SubcategoriesQuestionController(CategoryQuestionsController):
     _subcategories_data: _SubcategoriesData
 
-    def __init__(self, category_parent_folder: Path) -> None:
-        super().__init__(category_parent_folder)
+    def __init__(self, root_folder: Path) -> None:
+        super().__init__(root_folder)
         
 
     def get_question_position(self, question: str) -> Position:
@@ -142,7 +142,7 @@ class SubcategoriesQuestionController(CategoryQuestionsController):
             files = self._get_question_files(subfolder)
             
             if len(files) != 3:
-                raise Exception("More than 3 questions")
+                raise Exception(f'Expected exactly 3 question files in folder {subfolder.stem}, but found {len(files)}.')
             
             questions = self._read_questions(files)
             self._subcategories_data[subfolder.stem] = {q.title: q for q in questions}
