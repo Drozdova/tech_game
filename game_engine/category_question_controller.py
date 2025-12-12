@@ -1,6 +1,7 @@
 from pathlib import Path
 from dataclasses import dataclass
 import json
+from typing import TypeAlias, Dict
 
 
 @dataclass
@@ -10,6 +11,11 @@ class QuestionInfo:
     correct_answer: str
     variants: list[str]
     used: bool = False
+
+
+# Type aliases
+_QuestionsDict: TypeAlias = Dict[str, QuestionInfo]
+_SubcategoriesData: TypeAlias = Dict[str, Dict[str, QuestionInfo]]
 
 
 class Position:
@@ -25,7 +31,7 @@ class Position:
 
 
 class CategoryQuestionsController:
-    _questions: dict[str, QuestionInfo]
+    _questions: _QuestionsDict
     category_name: str
 
     def __init__(self, category_folder: Path) -> None:
@@ -74,7 +80,7 @@ class CategoryQuestionsController:
     def get_prices(self) -> list[int]:
         return [q.price for q in self._questions.values()]
 
-    def mark_question_used(self, question) -> bool | None:
+    def mark_question_used(self, question: str) -> bool | None:
         self._questions[question].used = True
 
     def get_category_name(self) -> str:
@@ -86,7 +92,7 @@ class CategoryQuestionsController:
     def _column_from_price(self, price: int) -> int:
         return self.transform_price(price) % 3
 
-    def _load_from_json_file(self, path) -> QuestionInfo:
+    def _load_from_json_file(self, path: Path) -> QuestionInfo:
         price = int(path.stem)
         with open(path, encoding="utf-8") as file:
             data = json.load(file)
@@ -107,8 +113,8 @@ class CategoryQuestionsController:
 
         return self._read_questions(files)
 
-class SubfoldersCategoryController(CategoryQuestionsController):
-    _subcategories_data: dict[str, dict[str, QuestionInfo]]
+class SubcategoriesQuestionController(CategoryQuestionsController):
+    _subcategories_data: _SubcategoriesData
 
     def __init__(self, category_parent_folder: Path) -> None:
         super().__init__(category_parent_folder)
@@ -129,7 +135,7 @@ class SubfoldersCategoryController(CategoryQuestionsController):
 
         return list(self._subcategories_data.keys())[row]
 
-    def _load_questions(self, folder) -> list[QuestionInfo]:
+    def _load_questions(self, folder: Path) -> list[QuestionInfo]:
         self._subcategories_data = {}
 
         for subfolder in folder.iterdir():

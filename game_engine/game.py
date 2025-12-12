@@ -3,7 +3,7 @@
 from asyncio import streams
 from pathlib import Path
 from dataclasses import dataclass
-from .category_question_controller import CategoryQuestionsController, SubfoldersCategoryController, Position
+from .category_question_controller import CategoryQuestionsController, SubcategoriesQuestionController, Position
 
 
 @dataclass
@@ -107,7 +107,7 @@ class Game:
     def _load_categories(self):
         for folder in (Path(__file__).parent / "resources" / "game_questions").iterdir():
             if any(item.is_dir() for item in folder.iterdir()):
-                category = SubfoldersCategoryController(folder)
+                category = SubcategoriesQuestionController(folder)
             else:
                 category = CategoryQuestionsController(folder)
             self._category_controllers[folder.stem] = category
