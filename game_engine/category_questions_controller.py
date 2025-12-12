@@ -1,3 +1,4 @@
+from csv import Error
 from pathlib import Path
 from dataclasses import dataclass
 import json
@@ -35,19 +36,17 @@ class CategoryQuestionsController:
     _category_name: str
 
     def __init__(self, category_folder: Path) -> None:
-        questions = self._load_questions(category_folder)
-        self._questions = {q.title: q for q in questions}
         self._category_name = category_folder.stem
+        self._questions = {}
+        self._set_questions(self._load_questions(category_folder))
+
+    def _set_questions(self, questions: list[QuestionInfo]):
+        self._ensure_questions_unique(questions)
+        self._questions = {q.title: q for q in questions}
 
     def get_questions(self) -> list[str]:
         return list(self._questions.keys())
 
-    def _get_question(self, title: str) -> QuestionInfo:
-        if title not in self._questions:
-            raise Exception("Question not found")
-        
-        return self._questions[title]
-    
     def get_variants_for_question(self, question: str) -> list[str]:
         return self._get_question(question).variants
 
@@ -87,6 +86,12 @@ class CategoryQuestionsController:
     def get_category_name(self) -> str:
         return self._category_name
 
+    def _get_question(self, title: str) -> QuestionInfo:
+        if title not in self._questions:
+            raise Exception("Question not found")
+
+        return self._questions[title]
+
     def _transform_price(self, price: int) -> int:
         return int((price) / 100) - 1
 
@@ -97,29 +102,40 @@ class CategoryQuestionsController:
         price = int(path.stem)
         with open(path, encoding="utf-8") as file:
             data = json.load(file)
-            return QuestionInfo(data["title"], price, data["correct_answer"], data["variants"])
+            return QuestionInfo(
+                data["title"], price, data["correct_answer"], data["variants"]
+            )
 
     def _get_question_files(self, folder: Path) -> list[Path]:
         return list(folder.glob("*.json"))
-    
+
     def _read_questions(self, files: list[Path]) -> list[QuestionInfo]:
         return [self._load_from_json_file(file) for file in files]
-    
+
     def _load_questions(self, folder: Path) -> list[QuestionInfo]:
-        
+
         files = self._get_question_files(folder)
-        
+
         if len(files) != 9:
-            raise Exception(f"Expected exactly 9 question files, but found {len(files)}.")
+            raise Exception(
+                f"Expected exactly 9 question files, but found {len(files)}."
+            )
 
         return self._read_questions(files)
+
+    def _ensure_questions_unique(self, questions: list[QuestionInfo]):
+        s = set()
+        for q in questions:
+            if q.title in s:
+                raise Exception(f'Duplicate question "{q.title}"')
+            s.add(q.title)
+
 
 class SubcategoriesQuestionController(CategoryQuestionsController):
     _subcategories_data: _SubcategoriesData
 
     def __init__(self, root_folder: Path) -> None:
         super().__init__(root_folder)
-        
 
     def get_question_position(self, question: str) -> Position:
         for row, questions in enumerate(self._subcategories_data.values()):
@@ -132,7 +148,7 @@ class SubcategoriesQuestionController(CategoryQuestionsController):
 
     def get_row_count(self) -> int:
         return len(self._subcategories_data)
-    
+
     def get_row_name(self, row: int) -> str:
         if len(self._subcategories_data) <= row:
             raise Exception("Wrong row given")
@@ -144,11 +160,14 @@ class SubcategoriesQuestionController(CategoryQuestionsController):
 
         for subfolder in folder.iterdir():
             files = self._get_question_files(subfolder)
-            
+
             if len(files) != 3:
-                raise Exception(f'Expected exactly 3 question files in folder {subfolder.stem}, but found {len(files)}.')
-            
+                raise Exception(
+                    f"Expected exactly 3 question files in folder {subfolder.stem}, but found {len(files)}."
+                )
+
             questions = self._read_questions(files)
+            self._ensure_questions_unique(questions)
             self._subcategories_data[subfolder.stem] = {q.title: q for q in questions}
 
         all_questions = []
