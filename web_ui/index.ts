@@ -76,7 +76,13 @@ const showPriceBoard = () => {
 
   priceBoard.onPriceSelect((question, price) => {
     console.log('Price selected:', price, 'Question:', question);
-    showQuestionPage(question, price);
+    // Set current question in backend before showing question page
+    GameEngine.call('set_current_question', [question], (result, error) => {
+      if (error) {
+        console.error('Failed to set current question:', error);
+      }
+      showQuestionPage(question, price);
+    });
   });
 
   console.log('Showing price board');
@@ -167,8 +173,55 @@ GameEngine.connect(wsUrl, () => {
         const selectedCategory = categoryResult as string | null;
 
         if (selectedCategory) {
-          // Category selected - show price board
-          showPriceBoard();
+          // Category selected - check if there's a current question
+          GameEngine.call('get_current_question', [], (currentQuestionResult, currentQuestionError) => {
+            if (currentQuestionError) {
+              console.error('Failed to get current question:', currentQuestionError);
+              // If error getting current question, show price board
+              showPriceBoard();
+              return;
+            }
+
+            const currentQuestion = currentQuestionResult as string | null;
+            
+            if (currentQuestion) {
+              // There's a current question - need to get its price
+              // TODO: Need backend method get_question_price(question: string) -> int
+              // For now, try to get price from prices list
+              GameEngine.call('get_prices', [], (pricesResult, pricesError) => {
+                if (pricesError) {
+                  console.error('Failed to get prices:', pricesError);
+                  showPriceBoard();
+                  return;
+                }
+
+                GameEngine.call('get_current_questions', [], (questionsResult, questionsError) => {
+                  if (questionsError) {
+                    console.error('Failed to get questions:', questionsError);
+                    showPriceBoard();
+                    return;
+                  }
+
+                  const questions = questionsResult as string[];
+                  const prices = pricesResult as number[];
+                  
+                  // Find price by matching question index
+                  const questionIndex = questions.indexOf(currentQuestion);
+                  if (questionIndex !== -1 && questionIndex < prices.length) {
+                    const questionPrice = prices[questionIndex];
+                    showQuestionPage(currentQuestion, questionPrice);
+                  } else {
+                    // Fallback: show price board if can't find price
+                    console.warn('Could not find price for current question, showing price board');
+                    showPriceBoard();
+                  }
+                });
+              });
+            } else {
+              // No current question - show price board
+              showPriceBoard();
+            }
+          });
         } else {
           // No category - show category selection
           showCategorySelect();

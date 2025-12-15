@@ -82,6 +82,12 @@ class Game:
     def get_questions(self) -> list[str]:
         return self._get_current_category().get_questions()
     
+    def set_current_question(self, question: str):
+        self._get_current_category().set_current_question(question)
+   
+    def get_current_question(self) -> str | None:
+        return self._get_current_category().get_current_question()
+    
     def get_question_position(self, question: str) -> Position:
         return self._get_current_category().get_question_position(question)
 
@@ -100,6 +106,8 @@ class Game:
         is_correct = self._get_current_category().get_correct_answer(question) == answer
         self._update_score(price, is_correct)
         self._get_current_category().mark_question_used(question)
+        self._get_current_category().clear_current_question()
+        self._current_category = None
         return is_correct
 
     def is_used(self, question: str) -> bool:
