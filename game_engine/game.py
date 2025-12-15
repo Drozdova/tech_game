@@ -56,6 +56,12 @@ class Game:
     def get_category_list(self) -> list[str]:
         return list(self._category_controllers.keys())
 
+    def is_category_used(self, category: str) -> bool:
+        if category not in self._category_controllers:
+            raise Exception("Category not found")
+        
+        return self._category_controllers[category].is_all_questions_used()
+
     def set_current_category(self, selected_category: str):
         if selected_category not in self._category_controllers:
             raise Exception("Category not found")

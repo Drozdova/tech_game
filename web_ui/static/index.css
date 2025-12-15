@@ -556,6 +556,29 @@ body::after {
   right: 25px;
 }
 
+.category-card-used {
+  opacity: 0.4;
+  cursor: default !important;
+  color: var(--text-muted) !important;
+  background: var(--bg-dark) !important;
+  border-color: var(--text-muted) !important;
+}
+
+.category-card-used::before {
+  background: var(--text-muted) !important;
+}
+
+.category-card-used:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: var(--text-muted) !important;
+  background: var(--bg-dark) !important;
+}
+
+.category-card-used:hover::after {
+  opacity: 0 !important;
+}
+
 /* ============================================
    PRICE BOARD PAGE
    ============================================ */

@@ -124,9 +124,13 @@ export class CategorySelect {
       container.innerHTML = '';
       const categories = result as string[];
 
+      // Load all categories and check if they're used
       categories.forEach(category => {
-        const card = this.createCategoryCard(category);
-        container.appendChild(card);
+        GameEngine.call('is_category_used', [category], (isUsedResult, isUsedError) => {
+          const isUsed = isUsedError ? false : (isUsedResult as boolean);
+          const card = this.createCategoryCard(category, isUsed);
+          container.appendChild(card);
+        });
       });
     });
   }
@@ -134,11 +138,15 @@ export class CategorySelect {
   /**
    * Create a category card element
    */
-  private createCategoryCard(categoryName: string): HTMLElement {
+  private createCategoryCard(categoryName: string, isUsed: boolean = false): HTMLElement {
     const card = document.createElement('div');
-    card.className = 'category-card';
+    card.className = isUsed ? 'category-card category-card-used' : 'category-card';
     card.textContent = categoryName;
-    card.onclick = () => this.onCategoryClick(categoryName);
+    
+    if (!isUsed) {
+      card.onclick = () => this.onCategoryClick(categoryName);
+    }
+    
     return card;
   }
 

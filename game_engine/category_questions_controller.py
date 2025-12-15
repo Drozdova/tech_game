@@ -52,6 +52,9 @@ class CategoryQuestionsController:
     def is_question_used(self, question: str) -> bool:
         return self._get_question(question).used
 
+    def is_all_questions_used(self) -> bool:
+        return all([q.used for q in self._questions.values()])
+    
     def get_question_position(self, question: str) -> Position:
         price = self._get_question(question).price
         return Position(
