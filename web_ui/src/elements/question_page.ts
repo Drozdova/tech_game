@@ -111,20 +111,20 @@ export class QuestionPage {
       
       if (isCorrect) {
         button.classList.add('correct');
-        this.showResult('Правильно!', 'correct');
+        this.showCorrectPopup();
         setTimeout(() => {
           if (this.onAnswerCallback) {
             this.onAnswerCallback(true);
           }
-        }, 2000);
+        }, 3000);
       } else {
         button.classList.add('incorrect');
-        this.showResult('Неправильно', 'incorrect');
+        this.showIncorrectPopup();
         setTimeout(() => {
           if (this.onAnswerCallback) {
             this.onAnswerCallback(false);
           }
-        }, 2000);
+        }, 3000);
       }
     });
   }
@@ -140,6 +140,96 @@ export class QuestionPage {
     resultMessage.className = 'result-message';
     resultMessage.textContent = message;
     this.resultContainer.appendChild(resultMessage);
+  }
+
+  /**
+   * Show beautiful popup for correct answer
+   */
+  private showCorrectPopup(): void {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'popup-overlay';
+    
+    // Create popup container
+    const popup = document.createElement('div');
+    popup.className = 'correct-popup';
+    
+    // Create icon
+    const icon = document.createElement('div');
+    icon.className = 'popup-icon popup-icon-correct';
+    icon.textContent = '✓';
+    
+    // Create title
+    const title = document.createElement('div');
+    title.className = 'popup-title popup-title-correct';
+    title.textContent = 'Правильно!';
+    
+    popup.appendChild(icon);
+    popup.appendChild(title);
+    overlay.appendChild(popup);
+    
+    // Add to body
+    document.body.appendChild(overlay);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+      overlay.classList.add('popup-visible');
+    });
+    
+    // Auto-close after 3 seconds
+    setTimeout(() => {
+      if (overlay.parentNode) {
+        overlay.classList.add('popup-closing');
+        setTimeout(() => {
+          overlay.remove();
+        }, 300);
+      }
+    }, 3000);
+  }
+
+  /**
+   * Show beautiful popup for incorrect answer
+   */
+  private showIncorrectPopup(): void {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'popup-overlay';
+    
+    // Create popup container
+    const popup = document.createElement('div');
+    popup.className = 'incorrect-popup';
+    
+    // Create icon
+    const icon = document.createElement('div');
+    icon.className = 'popup-icon';
+    icon.textContent = '✗';
+    
+    // Create title
+    const title = document.createElement('div');
+    title.className = 'popup-title';
+    title.textContent = 'Неправильно';
+    
+    popup.appendChild(icon);
+    popup.appendChild(title);
+    overlay.appendChild(popup);
+    
+    // Add to body
+    document.body.appendChild(overlay);
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+      overlay.classList.add('popup-visible');
+    });
+    
+    // Auto-close after 3 seconds
+    setTimeout(() => {
+      if (overlay.parentNode) {
+        overlay.classList.add('popup-closing');
+        setTimeout(() => {
+          overlay.remove();
+        }, 300);
+      }
+    }, 3000);
   }
 
   /**
