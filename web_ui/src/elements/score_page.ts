@@ -20,7 +20,7 @@ export class ScorePage {
 
     const title = document.createElement('h1');
     title.className = 'score-title';
-    title.textContent = 'Счёт';
+    title.textContent = 'SCORE';
     header.appendChild(title);
 
     const backButton = document.createElement('button');

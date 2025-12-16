@@ -11,11 +11,14 @@
 
 import { GameEngine } from './src/game_engine.js';
 import { TemplateManager } from './src/template_manager.js';
+import { WelcomePage } from './src/elements/welcome_page.js';
 import { TeamSetup } from './src/elements/team_setup.js';
 import { CategorySelect } from './src/elements/category_select.js';
 import { PriceBoard } from './src/elements/price_board.js';
 import { QuestionPage } from './src/elements/question_page.js';
 import { ScorePage } from './src/elements/score_page.js';
+import { GameOverPage } from './src/elements/game_over_page.js';
+import { FinalResultsPage } from './src/elements/final_results_page.js';
 
 /**
  * Get WebSocket URL from various sources
@@ -60,9 +63,23 @@ const showQuestionPage = (questionTitle: string, questionPrice: number) => {
   appContainer.appendChild(questionPage.el);
 
   questionPage.onAnswer((isCorrect) => {
-    // Switch to next team and go back to category select
+    // Switch to next team and check if game is finished
     GameEngine.call('next_team', [], () => {
+      // Check if game is finished (all questions answered)
+      GameEngine.call('is_game_finished', [], (finishedResult, finishedError) => {
+        if (finishedError) {
+          console.error('Failed to check if game finished:', finishedError);
+          showCategorySelect();
+          return;
+        }
+
+        const isFinished = finishedResult as boolean;
+        if (isFinished) {
+          showGameOver();
+        } else {
       showCategorySelect();
+        }
+      });
     });
   });
 
@@ -81,7 +98,7 @@ const showPriceBoard = () => {
       if (error) {
         console.error('Failed to set current question:', error);
       }
-      showQuestionPage(question, price);
+    showQuestionPage(question, price);
     });
   });
 
@@ -100,6 +117,27 @@ const showScorePage = () => {
   console.log('Showing score page');
 };
 
+const showGameOver = () => {
+  appContainer.innerHTML = '';
+  const gameOverPage = new GameOverPage();
+  appContainer.appendChild(gameOverPage.el);
+
+  gameOverPage.onViewResults(() => {
+    console.log('View results clicked');
+    showFinalResults();
+  });
+
+  console.log('Showing game over page');
+};
+
+const showFinalResults = () => {
+  appContainer.innerHTML = '';
+  const finalResults = new FinalResultsPage();
+  appContainer.appendChild(finalResults.el);
+
+  console.log('Showing final results');
+};
+
 const showCategorySelect = () => {
   appContainer.innerHTML = '';
   const categorySelect = new CategorySelect();
@@ -111,7 +149,7 @@ const showCategorySelect = () => {
   });
 
   categorySelect.onNewGame(() => {
-    showTeamSetup();
+    showWelcomePage(false);
   });
 
   categorySelect.onScore(() => {
@@ -121,14 +159,34 @@ const showCategorySelect = () => {
   console.log('Showing category selection');
 };
 
+const showWelcomePage = (showStartButton: boolean = false) => {
+  appContainer.innerHTML = '';
+  const welcomePage = new WelcomePage(showStartButton);
+  appContainer.appendChild(welcomePage.el);
+
+  welcomePage.onCreateTeams(() => {
+    console.log('Create teams clicked');
+    showTeamSetup();
+  });
+
+  if (showStartButton) {
+    welcomePage.onStartGame(() => {
+      console.log('Start game clicked');
+      showCategorySelect();
+    });
+  }
+
+  console.log('Showing welcome page');
+};
+
 const showTeamSetup = () => {
   appContainer.innerHTML = '';
   const teamSetup = new TeamSetup();
   appContainer.appendChild(teamSetup.el);
 
-  teamSetup.onStart((teams) => {
-    console.log('Teams created:', teams);
-    showCategorySelect();
+  teamSetup.onDone(() => {
+    console.log('Teams created, returning to welcome page');
+    showWelcomePage(true); // Show welcome page with start button
   });
   console.log('Showing team setup');
 };
@@ -157,12 +215,26 @@ GameEngine.connect(wsUrl, () => {
       const hasTeams = teams && teams.length > 0;
 
       if (!hasTeams) {
-        // No teams - show team setup
-        showTeamSetup();
+        // No teams - show welcome page
+        showWelcomePage(false);
         return;
       }
 
-      // Teams exist - check if category is selected
+      // Teams exist - first check if game is finished
+      GameEngine.call('is_game_finished', [], (finishedResult, finishedError) => {
+        if (finishedError) {
+          console.error('Failed to check if game finished:', finishedError);
+          // Continue with normal flow if check fails
+        } else {
+          const isFinished = finishedResult as boolean;
+          if (isFinished) {
+            // Game is finished - show game over page
+            showGameOver();
+            return;
+          }
+        }
+
+        // Game is not finished - check if category is selected
       GameEngine.call('get_selected_category', [], (categoryResult, categoryError) => {
         if (categoryError) {
           console.error('Failed to get category:', categoryError);
@@ -219,7 +291,7 @@ GameEngine.connect(wsUrl, () => {
               });
             } else {
               // No current question - show price board
-              showPriceBoard();
+          showPriceBoard();
             }
           });
         } else {
@@ -227,6 +299,7 @@ GameEngine.connect(wsUrl, () => {
           showCategorySelect();
         }
       });
+      }); // Close is_game_finished callback
     });
   });
 });

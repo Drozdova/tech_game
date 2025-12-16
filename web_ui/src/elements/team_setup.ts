@@ -6,8 +6,9 @@ import { GameEngine } from '../game_engine.js';
 
 export class TeamSetup {
   el: HTMLElement;
+  doneButton: HTMLElement;
   private teams: string[] = [];
-  private onStartCallback: ((teams: string[]) => void) | null = null;
+  private onDoneCallback: (() => void) | null = null;
 
   constructor() {
     // Create main container
@@ -17,7 +18,7 @@ export class TeamSetup {
     // Create title
     const title = document.createElement('h1');
     title.className = 'setup-title';
-    title.textContent = 'Создание команд';
+    title.textContent = 'CREATE TEAMS';
     this.el.appendChild(title);
 
     // Create teams container
@@ -37,12 +38,12 @@ export class TeamSetup {
     addButton.onclick = () => this.addTeamInput();
     this.el.appendChild(addButton);
 
-    // Create start button
-    const startButton = document.createElement('button');
-    startButton.className = 'start-game-button';
-    startButton.textContent = 'Начать игру';
-    startButton.onclick = () => this.startGame();
-    this.el.appendChild(startButton);
+    // Create done button (inside container)
+    this.doneButton = document.createElement('button');
+    this.doneButton.className = 'done-teams-button';
+    this.doneButton.textContent = 'Готово';
+    this.doneButton.onclick = () => this.done();
+    this.el.appendChild(this.doneButton);
   }
 
   /**
@@ -87,9 +88,9 @@ export class TeamSetup {
   }
 
   /**
-   * Collect team names and start the game
+   * Collect team names and save them
    */
-  private startGame(): void {
+  private done(): void {
     const teamsContainer = this.el.querySelector('#teams-list') as HTMLElement;
     if (!teamsContainer) return;
 
@@ -123,9 +124,9 @@ export class TeamSetup {
         return;
       }
 
-      // Call the callback to start the game
-      if (this.onStartCallback) {
-        this.onStartCallback(this.teams);
+      // Call the callback to return to welcome page
+      if (this.onDoneCallback) {
+        this.onDoneCallback();
       }
     });
   }
@@ -171,10 +172,10 @@ export class TeamSetup {
   }
 
   /**
-   * Set callback for when game starts
+   * Set callback for when done button is clicked
    */
-  onStart(callback: (teams: string[]) => void): void {
-    this.onStartCallback = callback;
+  onDone(callback: () => void): void {
+    this.onDoneCallback = callback;
   }
 }
 

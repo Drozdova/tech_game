@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import json
 from typing import TypeAlias, Dict
 
+# TO DO: реализовать выбор вопросов по их положению как по уникальному ID, а не по самому вопросу
 
 @dataclass
 class QuestionInfo:

@@ -9,7 +9,6 @@ export class QuestionPage {
   private questionTitle: string;
   private questionPrice: number;
   private variantsContainer: HTMLElement;
-  private resultContainer: HTMLElement;
   private onAnswerCallback: ((isCorrect: boolean) => void) | null = null;
 
   constructor(questionTitle: string, questionPrice: number) {
@@ -30,11 +29,6 @@ export class QuestionPage {
     this.variantsContainer = document.createElement('div');
     this.variantsContainer.className = 'variants-container';
     this.el.appendChild(this.variantsContainer);
-
-    // Create result container
-    this.resultContainer = document.createElement('div');
-    this.resultContainer.className = 'result-container';
-    this.el.appendChild(this.resultContainer);
 
     // Load variants
     this.loadVariants();
@@ -64,7 +58,7 @@ export class QuestionPage {
 
     const title = document.createElement('h2');
     title.className = 'variants-title';
-    title.textContent = 'Выберите ответ:';
+    title.textContent = 'SELECT ANSWER:';
     this.variantsContainer.appendChild(title);
 
     const buttonsContainer = document.createElement('div');
@@ -100,7 +94,8 @@ export class QuestionPage {
     // Submit answer to server
     GameEngine.call('submit_answer', [this.questionTitle, answer, this.questionPrice], (result, error) => {
       if (error) {
-        this.showResult(`Ошибка: ${error}`, 'error');
+        console.error('Error submitting answer:', error);
+        // Show error popup or just re-enable buttons
         allButtons.forEach(btn => {
           (btn as HTMLButtonElement).disabled = false;
         });
@@ -130,22 +125,14 @@ export class QuestionPage {
   }
 
   /**
-   * Show result message
-   */
-  private showResult(message: string, type: 'correct' | 'incorrect' | 'error'): void {
-    this.resultContainer.innerHTML = '';
-    this.resultContainer.className = `result-container result-${type}`;
-    
-    const resultMessage = document.createElement('div');
-    resultMessage.className = 'result-message';
-    resultMessage.textContent = message;
-    this.resultContainer.appendChild(resultMessage);
-  }
-
-  /**
    * Show beautiful popup for correct answer
    */
   private showCorrectPopup(): void {
+    // Get question container position
+    const rect = this.el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
     // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'popup-overlay';
@@ -153,6 +140,8 @@ export class QuestionPage {
     // Create popup container
     const popup = document.createElement('div');
     popup.className = 'correct-popup';
+    popup.style.setProperty('--popup-x', `${centerX}px`);
+    popup.style.setProperty('--popup-y', `${centerY}px`);
     
     // Create icon
     const icon = document.createElement('div');
@@ -168,7 +157,7 @@ export class QuestionPage {
     popup.appendChild(title);
     overlay.appendChild(popup);
     
-    // Add to body
+    // Add to body for full-screen blur
     document.body.appendChild(overlay);
     
     // Trigger animation
@@ -191,6 +180,11 @@ export class QuestionPage {
    * Show beautiful popup for incorrect answer
    */
   private showIncorrectPopup(): void {
+    // Get question container position
+    const rect = this.el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
     // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'popup-overlay';
@@ -198,6 +192,8 @@ export class QuestionPage {
     // Create popup container
     const popup = document.createElement('div');
     popup.className = 'incorrect-popup';
+    popup.style.setProperty('--popup-x', `${centerX}px`);
+    popup.style.setProperty('--popup-y', `${centerY}px`);
     
     // Create icon
     const icon = document.createElement('div');
@@ -213,7 +209,7 @@ export class QuestionPage {
     popup.appendChild(title);
     overlay.appendChild(popup);
     
-    // Add to body
+    // Add to body for full-screen blur
     document.body.appendChild(overlay);
     
     // Trigger animation

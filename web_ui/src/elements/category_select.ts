@@ -23,7 +23,7 @@ export class CategorySelect {
     
     const title = document.createElement('h1');
     title.className = 'category-title';
-    title.textContent = 'Выберите категорию';
+    title.textContent = 'SELECT CATEGORY';
     header.appendChild(title);
 
     const scoreButton = document.createElement('button');

@@ -12,6 +12,8 @@ export class PriceBoard {
   private rowLabels: Map<number, HTMLElement> = new Map();
   private onPriceSelectCallback: ((question: string, price: number) => void) | null = null;
   private gridCells: Map<string, HTMLElement> = new Map();
+  private totalQuestions: number = 0;
+  private loadedQuestions: number = 0;
 
   constructor() {
     // Create main container
@@ -21,7 +23,7 @@ export class PriceBoard {
     // Create title
     const title = document.createElement('h1');
     title.className = 'board-title';
-    title.textContent = 'Выберите вопрос';
+    title.textContent = 'SELECT QUESTION';
     this.el.appendChild(title);
 
     // Create table wrapper (centered)
@@ -118,6 +120,10 @@ export class PriceBoard {
             return;
           }
 
+          // Track loading progress
+          this.totalQuestions = questions.length;
+          this.loadedQuestions = 0;
+
           // Process each question
           questions.forEach((questionTitle, index) => {
             const price = prices[index];
@@ -144,6 +150,15 @@ export class PriceBoard {
                 }
                 const isUsed = usedResult as boolean;
                 this.fillCell(row, col, questionTitle, price, isUsed);
+                
+                // Track loading and adjust centering when all questions are loaded
+                this.loadedQuestions++;
+                if (this.loadedQuestions === this.totalQuestions) {
+                  // Wait a bit for DOM to update, then adjust centering
+                  setTimeout(() => {
+                    this.adjustTableCentering();
+                  }, 100);
+                }
               });
             });
           });
@@ -227,25 +242,50 @@ export class PriceBoard {
   }
 
   /**
-   * Adjust table centering by applying negative transform translateX
-   * equal to half the width of the first column (row labels)
-   * This shifts the table relative to its current centered position
+   * Adjust table centering so that the price cards (not including row labels) are centered
+   * relative to the page title. We shift the table left by the full width of row labels column
+   * plus half of the spacing between labels and prices.
    */
   private adjustTableCentering(): void {
     // Wait for browser to render the table with text content
     requestAnimationFrame(() => {
-      const firstRowLabel = this.rowLabels.get(1);
-      if (!firstRowLabel) return;
+      requestAnimationFrame(() => {
+        // Find the maximum width of all row labels (they might have different widths)
+        let maxLabelWidth = 0;
+        this.rowLabels.forEach((label) => {
+          const width = label.offsetWidth;
+          if (width > maxLabelWidth) {
+            maxLabelWidth = width;
+          }
+        });
 
-      // Get actual width of the first column (th element)
-      const firstColumnWidth = firstRowLabel.offsetWidth;
-      
-      // Apply negative transform translateX equal to half the column width
-      // This shifts the table relative to its current centered position
-      const table = this.pricesContainer as HTMLTableElement;
-      if (table) {
-        table.style.transform = `translateX(-${firstColumnWidth / 2}px)`;
-      }
+        if (maxLabelWidth === 0) {
+          // If no labels found, try again later
+          setTimeout(() => this.adjustTableCentering(), 100);
+          return;
+        }
+        
+        // Get the first td element to calculate its padding-left
+        const firstRowLabel = this.rowLabels.get(1);
+        if (!firstRowLabel) return;
+        
+        const firstRow = firstRowLabel.parentElement;
+        if (!firstRow) return;
+        const firstTd = firstRow.querySelector('td:first-of-type') as HTMLElement;
+        if (!firstTd) return;
+        
+        const computedStyle = window.getComputedStyle(firstTd);
+        const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+        
+        // Shift table left by maximum width of labels column + half of spacing
+        // This centers the price cards (not the labels) relative to the title
+        const shiftAmount = maxLabelWidth + (paddingLeft / 2);
+        
+        const table = this.pricesContainer as HTMLTableElement;
+        if (table) {
+          table.style.transform = `translateX(-${shiftAmount}px)`;
+        }
+      });
     });
   }
 
