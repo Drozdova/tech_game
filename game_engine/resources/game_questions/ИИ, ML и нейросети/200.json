@@ -1,0 +1,10 @@
+{
+  "title": "Чем supervised learning отличается от unsupervised learning?",
+  "variants": [
+    "В supervised learning используются размеченные данные",
+    "Unsupervised learning требует больше вычислений",
+    "Supervised learning не использует признаки",
+    "Unsupervised learning работает только с текстом"
+  ],
+  "correct_answer": "В supervised learning используются размеченные данные"
+}

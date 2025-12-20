@@ -3,7 +3,7 @@
    ============================================ */
 
 /* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 /* Local Font */
@@ -201,7 +201,7 @@ body::after {
 .team-input-item {
   display: flex;
   gap: calc(10px * var(--scale-factor));
-  align-items: stretch;
+  align-items: center;
 }
 
 .team-input-wrapper {
@@ -212,7 +212,8 @@ body::after {
 
 .team-input {
   width: 100%;
-  padding: calc(18px * var(--scale-factor)) calc(20px * var(--scale-factor));
+  height: calc(56px * var(--scale-factor));
+  padding: 0 calc(20px * var(--scale-factor));
   background: var(--bg-dark);
   border: calc(1px * var(--scale-factor)) solid var(--border-color);
   border-radius: calc(4px * var(--scale-factor));
@@ -220,6 +221,7 @@ body::after {
   font-family: inherit;
   color: var(--text-primary);
   transition: all 0.3s;
+  box-sizing: border-box;
 }
 
 .team-input::placeholder {
@@ -259,7 +261,7 @@ button {
 
 .remove-team-button {
   width: calc(56px * var(--scale-factor));
-  align-self: stretch;
+  height: calc(56px * var(--scale-factor));
   background: transparent;
   border: calc(1px * var(--scale-factor)) solid var(--border-color);
   border-radius: calc(4px * var(--scale-factor));
@@ -270,6 +272,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .remove-team-button:hover {
@@ -651,7 +654,7 @@ button {
    CATEGORY SELECT PAGE
    ============================================ */
 .category-select {
-  max-width: calc(1200px * var(--scale-factor));
+  max-width: calc(105 0px * var(--scale-factor));
   margin: 0 auto;
   width: 100%;
 }
@@ -854,7 +857,7 @@ button {
 
 .category-card {
   background: var(--bg-card);
-  padding: calc(40px * var(--scale-factor)) calc(30px * var(--scale-factor));
+  padding: calc(30px * var(--scale-factor)) calc(30px * var(--scale-factor));
   border-radius: calc(4px * var(--scale-factor));
   border: calc(1px * var(--scale-factor)) solid var(--border-color);
   cursor: pointer;
@@ -862,10 +865,13 @@ button {
   position: relative;
   overflow: hidden;
   font-size: calc(20px * var(--scale-factor));
-  font-weight: 400;
+  font-weight: 200;
   font-family: 'JetBrains Mono', monospace;
   color: var(--accent-cyan);
   text-shadow: 0 0 calc(8px * var(--scale-factor)) rgba(0, 212, 255, 0.3);
+  display: flex;
+  align-items: center;
+  min-height: calc(80px * var(--scale-factor));
 }
 
 .category-card::before {
