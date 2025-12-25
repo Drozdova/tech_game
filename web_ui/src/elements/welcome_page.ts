@@ -1,15 +1,17 @@
 /**
- * WelcomePage - Landing page with game title and start button
+ * WelcomePage - Landing page with game title and action buttons
  */
 
 export class WelcomePage {
   el: HTMLElement;
-  createTeamsButton: HTMLElement | null = null;
-  startGameButton: HTMLElement | null = null;
+  private newGameButton: HTMLElement | null = null;
+  private continueGameButton: HTMLElement | null = null;
+  private startGameButton: HTMLElement | null = null;
   private onCreateTeamsCallback: (() => void) | null = null;
+  private onContinueGameCallback: (() => void) | null = null;
   private onStartGameCallback: (() => void) | null = null;
 
-  constructor(showStartButton: boolean = false) {
+  constructor(hasSavedGame: boolean = false, showStartButton: boolean = false) {
     // Create main container
     this.el = document.createElement('div');
     this.el.className = 'welcome-page';
@@ -27,7 +29,7 @@ export class WelcomePage {
     // Subtitle with tech accent
     const subtitle = document.createElement('div');
     subtitle.className = 'welcome-subtitle';
-    subtitle.textContent = '// Технологическая викторина';
+    subtitle.textContent = '// TECH QUIZ';
     titleContainer.appendChild(subtitle);
 
     this.el.appendChild(titleContainer);
@@ -36,40 +38,58 @@ export class WelcomePage {
     const buttonsContainer = document.createElement('div');
     buttonsContainer.className = 'welcome-buttons';
 
-    // Create teams button (only if start button is not shown)
-    if (!showStartButton) {
-      this.createTeamsButton = document.createElement('button');
-      this.createTeamsButton.className = 'create-teams-button';
-      this.createTeamsButton.textContent = 'Создать команды';
-      this.createTeamsButton.onclick = () => {
-        if (this.onCreateTeamsCallback) {
-          this.onCreateTeamsCallback();
-        }
-      };
-      buttonsContainer.appendChild(this.createTeamsButton);
-    }
-
-    // Create start game button (only if showStartButton is true)
+    // If showStartButton is true, show "START GAME" button (after teams created)
     if (showStartButton) {
       this.startGameButton = document.createElement('button');
       this.startGameButton.className = 'start-game-button-welcome';
-      this.startGameButton.textContent = 'Начать игру';
+      this.startGameButton.textContent = 'НАЧАТЬ ИГРУ';
       this.startGameButton.onclick = () => {
         if (this.onStartGameCallback) {
           this.onStartGameCallback();
         }
       };
       buttonsContainer.appendChild(this.startGameButton);
+    } else {
+      // Otherwise show "NEW GAME" button
+      this.newGameButton = document.createElement('button');
+      this.newGameButton.className = 'create-teams-button';
+      this.newGameButton.textContent = 'НОВАЯ ИГРА';
+      this.newGameButton.onclick = () => {
+        if (this.onCreateTeamsCallback) {
+          this.onCreateTeamsCallback();
+        }
+      };
+      buttonsContainer.appendChild(this.newGameButton);
+
+      // Show "Continue Game" button only if there's a saved game
+      if (hasSavedGame) {
+        this.continueGameButton = document.createElement('button');
+        this.continueGameButton.className = 'continue-game-button-welcome';
+        this.continueGameButton.textContent = 'ПРОДОЛЖИТЬ ИГРУ';
+        this.continueGameButton.onclick = () => {
+          if (this.onContinueGameCallback) {
+            this.onContinueGameCallback();
+          }
+        };
+        buttonsContainer.appendChild(this.continueGameButton);
+      }
     }
 
     this.el.appendChild(buttonsContainer);
   }
 
   /**
-   * Set callback for when create teams button is clicked
+   * Set callback for when new game button is clicked
    */
   onCreateTeams(callback: () => void): void {
     this.onCreateTeamsCallback = callback;
+  }
+
+  /**
+   * Set callback for when continue game button is clicked
+   */
+  onContinueGame(callback: () => void): void {
+    this.onContinueGameCallback = callback;
   }
 
   /**

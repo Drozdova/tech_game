@@ -1,6 +1,7 @@
 """Game server entry point."""
 
 import os
+from pathlib import Path
 from .app import App
 from .server import GameServer
 from .game import Game
@@ -13,8 +14,15 @@ def main():
     host = os.getenv("GAME_HOST", "0.0.0.0")
     port = int(os.getenv("GAME_PORT", "8000"))
     
+    # Optional: путь к файлу сохранения из переменной окружения
+    save_file = os.getenv("GAME_SAVE_FILE")
+    if save_file:
+        save_file = Path(save_file)
+    else:
+        save_file = None  # Используется значение по умолчанию в Game
+    
     app = App()
-    game = Game()
+    game = Game(save_file=save_file)
     server = GameServer(game, host=host, port=port)
     
     # Register message handler

@@ -266,9 +266,9 @@ export class PriceBoard {
         }
         
         // Get the first td element to calculate its padding-left
-        const firstRowLabel = this.rowLabels.get(1);
-        if (!firstRowLabel) return;
-        
+      const firstRowLabel = this.rowLabels.get(1);
+      if (!firstRowLabel) return;
+
         const firstRow = firstRowLabel.parentElement;
         if (!firstRow) return;
         const firstTd = firstRow.querySelector('td:first-of-type') as HTMLElement;
@@ -281,10 +281,10 @@ export class PriceBoard {
         // This centers the price cards (not the labels) relative to the title
         const shiftAmount = maxLabelWidth + (paddingLeft / 2);
         
-        const table = this.pricesContainer as HTMLTableElement;
-        if (table) {
+      const table = this.pricesContainer as HTMLTableElement;
+      if (table) {
           table.style.transform = `translateX(-${shiftAmount}px)`;
-        }
+      }
       });
     });
   }

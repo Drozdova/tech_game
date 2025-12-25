@@ -3,7 +3,7 @@
    ============================================ */
 
 /* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 /* Local Font */
@@ -201,7 +201,7 @@ body::after {
 .team-input-item {
   display: flex;
   gap: calc(10px * var(--scale-factor));
-  align-items: center;
+  align-items: stretch;
 }
 
 .team-input-wrapper {
@@ -212,8 +212,7 @@ body::after {
 
 .team-input {
   width: 100%;
-  height: calc(56px * var(--scale-factor));
-  padding: 0 calc(20px * var(--scale-factor));
+  padding: calc(18px * var(--scale-factor)) calc(20px * var(--scale-factor));
   background: var(--bg-dark);
   border: calc(1px * var(--scale-factor)) solid var(--border-color);
   border-radius: calc(4px * var(--scale-factor));
@@ -221,7 +220,6 @@ body::after {
   font-family: inherit;
   color: var(--text-primary);
   transition: all 0.3s;
-  box-sizing: border-box;
 }
 
 .team-input::placeholder {
@@ -261,7 +259,7 @@ button {
 
 .remove-team-button {
   width: calc(56px * var(--scale-factor));
-  height: calc(56px * var(--scale-factor));
+  align-self: stretch;
   background: transparent;
   border: calc(1px * var(--scale-factor)) solid var(--border-color);
   border-radius: calc(4px * var(--scale-factor));
@@ -272,7 +270,6 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
 .remove-team-button:hover {
@@ -514,6 +511,28 @@ button {
   border-color: rgba(0, 212, 255, 0.8);
 }
 
+.continue-game-button-welcome {
+  width: 100%;
+  max-width: calc(500px * var(--scale-factor));
+  padding: calc(16px * var(--scale-factor)) calc(32px * var(--scale-factor));
+  background: transparent;
+  border: calc(1px * var(--scale-factor)) solid var(--accent-purple);
+  border-radius: calc(4px * var(--scale-factor));
+  color: var(--accent-purple);
+  font-size: calc(16px * var(--scale-factor));
+  font-weight: 500;
+  font-family: 'Satoshi', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: calc(1px * var(--scale-factor));
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.continue-game-button-welcome:hover {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.8);
+}
+
 .start-game-button-welcome {
   width: 100%;
   max-width: calc(500px * var(--scale-factor));
@@ -654,7 +673,7 @@ button {
    CATEGORY SELECT PAGE
    ============================================ */
 .category-select {
-  max-width: calc(105 0px * var(--scale-factor));
+  max-width: calc(1100px * var(--scale-factor));
   margin: 0 auto;
   width: 100%;
 }
@@ -701,13 +720,14 @@ button {
   box-shadow: var(--glow-cyan);
 }
 
-/* Footer with new game button */
+/* Footer with new game and end game buttons */
 .page-footer {
   margin-top: calc(50px * var(--scale-factor));
   padding-top: calc(20px * var(--scale-factor));
   border-top: calc(1px * var(--scale-factor)) solid var(--border-color);
   display: flex;
   justify-content: center;
+  gap: calc(15px * var(--scale-factor));
 }
 
 .new-game-button {
@@ -728,6 +748,26 @@ button {
   color: var(--error-red);
   background: rgba(255, 71, 87, 0.1);
   box-shadow: 0 0 calc(15px * var(--scale-factor)) rgba(255, 71, 87, 0.3);
+}
+
+.end-game-button {
+  padding: calc(12px * var(--scale-factor)) calc(24px * var(--scale-factor));
+  background: transparent;
+  border: calc(1px * var(--scale-factor)) solid var(--text-muted);
+  border-radius: calc(4px * var(--scale-factor));
+  color: var(--text-muted);
+  font-size: calc(14px * var(--scale-factor));
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.end-game-button:hover {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+  background: rgba(168, 85, 247, 0.1);
+  box-shadow: 0 0 calc(15px * var(--scale-factor)) rgba(168, 85, 247, 0.3);
 }
 
 /* Current Team Block - Prominent */
@@ -865,7 +905,7 @@ button {
   position: relative;
   overflow: hidden;
   font-size: calc(20px * var(--scale-factor));
-  font-weight: 200;
+  font-weight: 400;
   font-family: 'JetBrains Mono', monospace;
   color: var(--accent-cyan);
   text-shadow: 0 0 calc(8px * var(--scale-factor)) rgba(0, 212, 255, 0.3);
@@ -2164,4 +2204,52 @@ button {
   box-shadow: 
     0 0 calc(20px * var(--scale-factor)) rgba(0, 212, 255, 0.6),
     0 0 calc(40px * var(--scale-factor)) rgba(138, 43, 226, 0.4);
+}
+
+/* Final results button container */
+.final-results-button-container {
+  margin-top: calc(40px * var(--scale-factor));
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.continue-game-button {
+  padding: calc(12px * var(--scale-factor)) calc(24px * var(--scale-factor));
+  background: transparent;
+  border: calc(1px * var(--scale-factor)) solid var(--text-muted);
+  border-radius: calc(4px * var(--scale-factor));
+  color: var(--text-muted);
+  font-size: calc(14px * var(--scale-factor));
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.continue-game-button:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 calc(15px * var(--scale-factor)) rgba(0, 212, 255, 0.3);
+}
+
+.end-game-final-button {
+  padding: calc(12px * var(--scale-factor)) calc(24px * var(--scale-factor));
+  background: transparent;
+  border: calc(1px * var(--scale-factor)) solid var(--text-muted);
+  border-radius: calc(4px * var(--scale-factor));
+  color: var(--text-muted);
+  font-size: calc(14px * var(--scale-factor));
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.end-game-final-button:hover {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+  background: rgba(168, 85, 247, 0.1);
+  box-shadow: 0 0 calc(15px * var(--scale-factor)) rgba(168, 85, 247, 0.3);
 }
