@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import json
 from typing import TypeAlias, Dict
 
+# TO DO: реализовать выбор вопросов по их положению как по уникальному ID, а не по самому вопросу
 
 @dataclass
 class QuestionInfo:
@@ -34,11 +35,13 @@ class Position:
 class CategoryQuestionsController:
     _questions: _QuestionsDict
     _category_name: str
+    _current_question: str | None
 
     def __init__(self, category_folder: Path) -> None:
         self._category_name = category_folder.stem
         self._questions = {}
         self._set_questions(self._load_questions(category_folder))
+        self._current_question = None
 
     def get_questions(self) -> list[str]:
         return list(self._questions.keys())
@@ -52,6 +55,9 @@ class CategoryQuestionsController:
     def is_question_used(self, question: str) -> bool:
         return self._get_question(question).used
 
+    def is_all_questions_used(self) -> bool:
+        return all([q.used for q in self._questions.values()])
+
     def get_question_position(self, question: str) -> Position:
         price = self._get_question(question).price
         return Position(
@@ -62,13 +68,12 @@ class CategoryQuestionsController:
         return 3
 
     def get_row_name(self, row: int) -> str:
-        options = ['easy', 'medium', 'hard']
+        options = ["easy", "medium", "hard"]
         if row >= len(options):
             raise Exception(
                 f"Invalid row index: {row}. Expected 0 (easy), 1 (medium), or 2 (hard)."
             )
         return options[row]
-        
 
     def get_prices(self) -> list[int]:
         return [q.price for q in self._questions.values()]
@@ -78,6 +83,9 @@ class CategoryQuestionsController:
 
     def get_category_name(self) -> str:
         return self._category_name
+    
+    def get_current_question(self) -> str | None:
+        return self._current_question
 
     def _set_questions(self, questions: list[QuestionInfo]):
         self._ensure_questions_unique(questions)
@@ -89,6 +97,15 @@ class CategoryQuestionsController:
 
         return self._questions[title]
 
+    def set_current_question(self, question: str):
+        if question not in self._questions:
+            raise Exception("Question not found")
+        
+        self._current_question = question
+    
+    def clear_current_question(self):
+        self._current_question = None
+    
     def _transform_price(self, price: int) -> int:
         return int(price / 100) - 1
 

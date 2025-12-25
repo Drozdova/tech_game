@@ -1,0 +1,10 @@
+{
+  "title": "Какой язык оказал наибольшее влияние на создание языка C?",
+  "variants": [
+    "Pascal",
+    "ALGOL",
+    "Lisp",
+    "COBOL"
+  ],
+  "correct_answer": "ALGOL"
+}

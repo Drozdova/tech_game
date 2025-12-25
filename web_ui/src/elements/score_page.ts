@@ -20,7 +20,7 @@ export class ScorePage {
 
     const title = document.createElement('h1');
     title.className = 'score-title';
-    title.textContent = 'Счёт';
+    title.textContent = 'SCORE';
     header.appendChild(title);
 
     const backButton = document.createElement('button');
@@ -56,42 +56,61 @@ export class ScorePage {
         return;
       }
 
-      this.scoresContainer.innerHTML = '';
       const teams = result as string[];
+      
+      // Load all scores first, then sort and display
+      const teamScores: Array<{name: string, score: number}> = [];
+      let loadedCount = 0;
+
+      if (teams.length === 0) {
+        this.scoresContainer.innerHTML = '<div class="loading-text">Нет команд</div>';
+        return;
+      }
 
       teams.forEach((teamName) => {
-        this.loadTeamScore(teamName);
+        GameEngine.call('get_team_score', [teamName], (scoreResult, scoreError) => {
+          if (scoreError) {
+            console.error(`Failed to get score for ${teamName}:`, scoreError);
+            loadedCount++;
+          } else {
+            const score = scoreResult as number;
+            teamScores.push({ name: teamName, score: score });
+            loadedCount++;
+          }
+
+          // When all scores are loaded, sort and display
+          if (loadedCount === teams.length) {
+            // Sort by score descending (highest first)
+            teamScores.sort((a, b) => b.score - a.score);
+            
+            this.scoresContainer.innerHTML = '';
+            teamScores.forEach((team) => {
+              this.displayTeamScore(team.name, team.score);
+            });
+          }
+        });
       });
     });
   }
 
   /**
-   * Load and display score for a single team
+   * Display score for a single team
    */
-  private loadTeamScore(teamName: string): void {
-    GameEngine.call('get_team_score', [teamName], (result, error) => {
-      if (error) {
-        console.error(`Failed to get score for ${teamName}:`, error);
-        return;
-      }
+  private displayTeamScore(teamName: string, score: number): void {
+    const teamRow = document.createElement('div');
+    teamRow.className = 'score-row';
 
-      const score = result as number;
+    const nameEl = document.createElement('span');
+    nameEl.className = 'score-team-name';
+    nameEl.textContent = teamName;
 
-      const teamRow = document.createElement('div');
-      teamRow.className = 'score-row';
+    const scoreEl = document.createElement('span');
+    scoreEl.className = 'score-team-value';
+    scoreEl.textContent = `${score}`;
 
-      const nameEl = document.createElement('span');
-      nameEl.className = 'score-team-name';
-      nameEl.textContent = teamName;
-
-      const scoreEl = document.createElement('span');
-      scoreEl.className = 'score-team-value';
-      scoreEl.textContent = `${score}`;
-
-      teamRow.appendChild(nameEl);
-      teamRow.appendChild(scoreEl);
-      this.scoresContainer.appendChild(teamRow);
-    });
+    teamRow.appendChild(nameEl);
+    teamRow.appendChild(scoreEl);
+    this.scoresContainer.appendChild(teamRow);
   }
 
   /**

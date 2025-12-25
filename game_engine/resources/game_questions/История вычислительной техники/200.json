@@ -1,0 +1,10 @@
+{
+  "title": "Что считается одним из первых языков программирования высокого уровня?",
+  "variants": [
+    "ALGOL",
+    "Lisp",
+    "Fortran",
+    "COBOL"
+  ],
+  "correct_answer": "Fortran"
+}

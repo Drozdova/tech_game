@@ -1,0 +1,10 @@
+{
+  "title": "Как Kubernetes решает задачу service discovery?",
+  "variants": [
+    "Через DNS и сервисы Kubernetes",
+    "Через конфигурацию каждого контейнера вручную",
+    "Через внешние load balancer’ы ОС",
+    "Через прямое указание IP-адресов в коде"
+  ],
+  "correct_answer": "Через DNS и сервисы Kubernetes"
+}

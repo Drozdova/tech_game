@@ -11,6 +11,7 @@ export class CategorySelect {
   private onSelectCallback: ((category: string) => void) | null = null;
   private onNewGameCallback: (() => void) | null = null;
   private onScoreCallback: (() => void) | null = null;
+  private onEndGameCallback: (() => void) | null = null;
 
   constructor() {
     // Create main container
@@ -23,12 +24,12 @@ export class CategorySelect {
     
     const title = document.createElement('h1');
     title.className = 'category-title';
-    title.textContent = 'Выберите категорию';
+    title.textContent = 'SELECT CATEGORY';
     header.appendChild(title);
 
     const scoreButton = document.createElement('button');
     scoreButton.className = 'score-button';
-    scoreButton.textContent = 'Счёт';
+    scoreButton.textContent = 'СЧЁТ';
     scoreButton.onclick = () => {
       if (this.onScoreCallback) {
         this.onScoreCallback();
@@ -50,15 +51,25 @@ export class CategorySelect {
     categoriesContainer.id = 'categories-grid';
     this.el.appendChild(categoriesContainer);
 
-    // Create footer with new game button (subtle)
+    // Create footer with new game and end game buttons
     const footer = document.createElement('div');
     footer.className = 'page-footer';
     
     const newGameButton = document.createElement('button');
     newGameButton.className = 'new-game-button';
-    newGameButton.textContent = 'Новая игра';
+    newGameButton.textContent = 'НОВАЯ ИГРА';
     newGameButton.onclick = () => this.startNewGame();
     footer.appendChild(newGameButton);
+
+    const endGameButton = document.createElement('button');
+    endGameButton.className = 'end-game-button';
+    endGameButton.textContent = 'ЗАВЕРШИТЬ ИГРУ';
+    endGameButton.onclick = () => {
+      if (this.onEndGameCallback) {
+        this.onEndGameCallback();
+      }
+    };
+    footer.appendChild(endGameButton);
 
     this.el.appendChild(footer);
 
@@ -124,9 +135,13 @@ export class CategorySelect {
       container.innerHTML = '';
       const categories = result as string[];
 
+      // Load all categories and check if they're used
       categories.forEach(category => {
-        const card = this.createCategoryCard(category);
-        container.appendChild(card);
+        GameEngine.call('is_category_used', [category], (isUsedResult, isUsedError) => {
+          const isUsed = isUsedError ? false : (isUsedResult as boolean);
+          const card = this.createCategoryCard(category, isUsed);
+          container.appendChild(card);
+        });
       });
     });
   }
@@ -134,11 +149,15 @@ export class CategorySelect {
   /**
    * Create a category card element
    */
-  private createCategoryCard(categoryName: string): HTMLElement {
+  private createCategoryCard(categoryName: string, isUsed: boolean = false): HTMLElement {
     const card = document.createElement('div');
-    card.className = 'category-card';
+    card.className = isUsed ? 'category-card category-card-used' : 'category-card';
     card.textContent = categoryName;
-    card.onclick = () => this.onCategoryClick(categoryName);
+    
+    if (!isUsed) {
+      card.onclick = () => this.onCategoryClick(categoryName);
+    }
+    
     return card;
   }
 
@@ -166,15 +185,22 @@ export class CategorySelect {
    */
   private startNewGame(): void {
     if (confirm('Вы уверены, что хотите начать новую игру? Текущий прогресс будет потерян.')) {
-      GameEngine.call('reset_game', [], (result, error) => {
-        if (error) {
-          console.error('Failed to reset game:', error);
+      // Clear saved game state first
+      GameEngine.call('clear_saved_state', [], (clearResult, clearError) => {
+        if (clearError) {
+          console.error('Failed to clear saved state:', clearError);
         }
-        if (this.onNewGameCallback) {
-          this.onNewGameCallback();
-        } else {
-          window.location.reload();
-        }
+        // Then reset game
+        GameEngine.call('reset_game', [], (result, error) => {
+          if (error) {
+            console.error('Failed to reset game:', error);
+          }
+          if (this.onNewGameCallback) {
+            this.onNewGameCallback();
+          } else {
+            window.location.reload();
+          }
+        });
       });
     }
   }
@@ -198,5 +224,12 @@ export class CategorySelect {
    */
   onScore(callback: () => void): void {
     this.onScoreCallback = callback;
+  }
+
+  /**
+   * Set callback for ending the game
+   */
+  onEndGame(callback: () => void): void {
+    this.onEndGameCallback = callback;
   }
 }
