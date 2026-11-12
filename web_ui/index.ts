@@ -10,7 +10,6 @@
  */
 
 import { GameEngine } from './src/game_engine.js';
-import { TemplateManager } from './src/template_manager.js';
 import { WelcomePage } from './src/elements/welcome_page.js';
 import { TeamSetup } from './src/elements/team_setup.js';
 import { CategorySelect } from './src/elements/category_select.js';
@@ -24,7 +23,7 @@ import { getWebSocketUrl } from './src/config.js';
 /**
  * Get WebSocket URL from various sources
  * Priority:
- * 1. URL parameter (?ws=ws://example.com:8000) - overrides config
+ * 1. URL parameter (?ws=ws://example.com:8001) - overrides config
  * 2. Use config (auto-detect from current host)
  */
 function getWebSocketUrlWithOverride(): string {
@@ -228,28 +227,20 @@ const showTeamSetup = () => {
 const wsUrl = getWebSocketUrlWithOverride();
 console.log('Connecting to WebSocket:', wsUrl);
 GameEngine.connect(wsUrl, () => { 
-  console.log('Connected! Loading templates...');
-  appContainer.innerHTML = '<div class="loading">Loading templates...</div>';
+  console.log('Connected! Checking game state...');
+  appContainer.innerHTML = '<div class="loading">Checking game state...</div>';
 
-  // Step 2: Load templates
-  TemplateManager.loadTemplates(() => {
-    console.log('Templates loaded! Checking game state...');
-    appContainer.innerHTML = '<div class="loading">Checking game state...</div>';
+  GameEngine.call('get_team_list', [], (teamsResult, teamsError) => {
+    if (teamsError) {
+      console.error('Failed to get teams:', teamsError);
+      appContainer.innerHTML = '<div class="error">Failed to get game state</div>';
+      return;
+    }
 
-    // Step 3: Get game state from backend
-    GameEngine.call('get_team_list', [], (teamsResult, teamsError) => {
-      if (teamsError) {
-        console.error('Failed to get teams:', teamsError);
-        appContainer.innerHTML = '<div class="error">Failed to get game state</div>';
-        return;
-      }
+    const teams = teamsResult as string[];
+    const hasTeams = teams && teams.length > 0;
 
-      const teams = teamsResult as string[];
-      const hasTeams = teams && teams.length > 0;
-
-      // Always show welcome page first
-      // If teams exist, show "Continue Game" button, otherwise only "New Game"
-      showWelcomePage(hasTeams);
-    });
+    // Always show welcome page first. If teams exist, allow continuing.
+    showWelcomePage(hasTeams);
   });
 });

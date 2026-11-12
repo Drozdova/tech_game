@@ -74,32 +74,6 @@
         "kind": "build",
         "isDefault": true
       }
-    },
-    {
-      "label": "Debug: Prepare Frontend",
-      "type": "npm",
-      "script": "debug:prepare",
-      "isBackground": true,
-      "problemMatcher": [
-        "$tsc-watch",
-        {
-          "pattern": {
-            "regexp": "^$",
-            "file": 1,
-            "location": 2,
-            "message": 3
-          },
-          "background": {
-            "activeOnStart": true,
-            "beginsPattern": "^.*Watching files...*$",
-            "endsPattern": "^.*Local:.*$"
-          }
-        }
-      ],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated"
-      }
     }
   ]
 }
