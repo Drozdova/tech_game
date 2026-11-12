@@ -1,7 +1,32 @@
 """Message transport and handling utilities."""
 
 import json
-from typing import Any, Dict
+from typing import Any
+
+
+ALLOWED_METHODS = frozenset({
+    "clear_saved_state",
+    "finish_game",
+    "get_category_list",
+    "get_current_questions",
+    "get_current_team",
+    "get_prices",
+    "get_question_position",
+    "get_row_count",
+    "get_row_name",
+    "get_team_list",
+    "get_team_score",
+    "get_variants_for_question",
+    "is_category_used",
+    "is_game_finished",
+    "is_used",
+    "next_team",
+    "reset_game",
+    "set_current_category",
+    "set_current_question",
+    "set_teams",
+    "submit_answer",
+})
 
 
 def handle_game_message(message: str, game: Any) -> str:
@@ -22,15 +47,16 @@ def handle_game_message(message: str, game: Any) -> str:
         args = data.get("args", [])
         
         # Validate message format
-        if msg_id is None or method is None:
+        if msg_id is None or not isinstance(method, str) or not isinstance(args, list):
             return json.dumps({
                 "id": msg_id,
                 "result": None,
-                "error": "Invalid message format: missing id or method"
+                "error": "Invalid message format"
             })
         
-        # Check if method exists on game
-        if not hasattr(game, method):
+        # Expose only the operations used by the browser client. This prevents
+        # arbitrary access to internal and persistence methods through RPC.
+        if method not in ALLOWED_METHODS:
             return json.dumps({
                 "id": msg_id,
                 "result": None,
