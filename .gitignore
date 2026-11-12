@@ -14,8 +14,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# TypeScript
+# Generated output and local state
+build/
+dist/
 web_ui/dist/
+game_engine/game_state.json
+tech-game.zip
 *.tsbuildinfo
 
 # IDE
@@ -32,6 +36,3 @@ Thumbs.db
 
 # Plan files
 *.plan.md
-
-
-
