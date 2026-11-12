@@ -9,7 +9,8 @@ popd
 pyinstaller build_exe.spec --distpath dist --workpath build --noconfirm
 if errorlevel 1 exit /b %errorlevel%
 
-if exist dist\web_ui rmdir /S /Q dist\web_ui
+powershell -NoProfile -Command "if (Test-Path -LiteralPath 'dist\web_ui') { Remove-Item -LiteralPath 'dist\web_ui' -Recurse -Force }"
+if errorlevel 1 exit /b %errorlevel%
 mkdir dist\web_ui
 copy /Y web_ui\index.html dist\web_ui\index.html >nul
 xcopy web_ui\static dist\web_ui\static\ /E /I /Y >nul
