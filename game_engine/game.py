@@ -1,10 +1,10 @@
 """Base Game interface."""
 
-from asyncio import streams
 from pathlib import Path
 from dataclasses import dataclass
 from .category_questions_controller import CategoryQuestionsController, SubcategoriesQuestionController, Position
 import json
+import winreg
 
 
 @dataclass
@@ -20,12 +20,15 @@ class Game:
     _current_team_index: int
     _category_controllers: dict[str, CategoryQuestionsController]
     _current_category: CategoryQuestionsController | None
-    _save_file: Path
+    _registry_key_path: str
+    _resources_folder: Path
 
-    def __init__(self, save_file: Path | None = None):
-        if save_file is None:
-            save_file = Path(__file__).parent / "game_state.json"
-        self._save_file = save_file
+    def __init__(self, resources_folder: Path | None = None):
+        self._resources_folder = (Path(__file__).parent / "resources") if not resources_folder else resources_folder
+
+        # Registry path for saving game state
+        self._registry_key_path = r"SOFTWARE\TechGame"
+
         self.reset_game()
         self._load_game_state()
 
@@ -133,7 +136,7 @@ class Game:
         return True
     
     def _save_game_state(self):
-        """Сохраняет состояние игры в JSON файл"""
+        """Сохраняет состояние игры в реестр Windows"""
         if not self._teams:
             return
         
@@ -144,7 +147,7 @@ class Game:
                 "current_category": self._current_category.get_category_name() if self._current_category else None,
                 "used_questions": {}
             }
-            
+
             for category_name, controller in self._category_controllers.items():
                 used_questions = [
                     question for question, q_info in controller._questions.items()
@@ -152,9 +155,20 @@ class Game:
                 ]
                 if used_questions:
                     state["used_questions"][category_name] = used_questions
+
+            # Convert state to JSON string
+            state_json = json.dumps(state, ensure_ascii=False, indent=2)
             
-            with open(self._save_file, 'w', encoding='utf-8') as f:
-                json.dump(state, f, ensure_ascii=False, indent=2)
+            # Save to Windows Registry
+            try:
+                # Open or create registry key
+                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, self._registry_key_path)
+                # Set value
+                winreg.SetValueEx(key, "game_state", 0, winreg.REG_SZ, state_json)
+                winreg.CloseKey(key)
+            except Exception as reg_error:
+                print(f"Error saving to registry: {reg_error}")
+
         except Exception as e:
             print(f"Error saving game state: {e}")
 
@@ -164,7 +178,7 @@ class Game:
     
     def _load_categories(self):
         self._category_controllers = {}
-        for folder in (Path(__file__).parent / "resources" / "game_questions").iterdir():
+        for folder in (self._resources_folder / "game_questions").iterdir():
             if any(item.is_dir() for item in folder.iterdir()):
                 category = SubcategoriesQuestionController(folder)
             else:
@@ -177,13 +191,20 @@ class Game:
         return self._current_category
 
     def _load_game_state(self):
-        """Загружает состояние игры из JSON файла"""
-        if not self._save_file.exists():
-            return  # Нет сохраненного состояния
+        """Загружает состояние игры из реестра Windows"""
+        try:
+            # Try to open registry key
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, self._registry_key_path, 0, winreg.KEY_READ)
+            state_json, _ = winreg.QueryValueEx(key, "game_state")
+            winreg.CloseKey(key)
+        except FileNotFoundError:
+            return  # No saved state in registry
+        except Exception as reg_error:
+            print(f"Error reading from registry: {reg_error}")
+            return
         
         try:
-            with open(self._save_file, 'r', encoding='utf-8') as f:
-                state = json.load(f)
+            state = json.loads(state_json)
             
             if "teams" in state and state["teams"]:
                 self._teams = {
@@ -213,6 +234,15 @@ class Game:
             print(f"Error loading game state: {e}")
 
     def clear_saved_state(self):
-        """Удаляет сохраненное состояние игры"""
-        if self._save_file.exists():
-            self._save_file.unlink()
+        """Удаляет сохраненное состояние игры из реестра"""
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, self._registry_key_path, 0, winreg.KEY_WRITE)
+            try:
+                winreg.DeleteValue(key, "game_state")
+            except FileNotFoundError:
+                pass  # Value doesn't exist, nothing to delete
+            winreg.CloseKey(key)
+        except FileNotFoundError:
+            pass  # Key doesn't exist, nothing to delete
+        except Exception as e:
+            print(f"Error clearing saved state: {e}")

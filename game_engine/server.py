@@ -13,7 +13,7 @@ class GameServer:
     message handler (which should be a synchronous function).
     """
     
-    def __init__(self, game, host: str = "localhost", port: int = 8000):
+    def __init__(self, game, host: str = "localhost", port: int = 8001):
         """Initialize the game server.
         
         Args:

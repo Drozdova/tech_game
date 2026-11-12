@@ -42,7 +42,7 @@ module.exports = {
   // Use local IP if available, otherwise listen on all interfaces
   // This will show the actual IP address instead of 0.0.0.0 in the output
   host: localIP || "0.0.0.0",
-  port: 5500,
+  port: 5501,
   open: true,
   notify: false,
   // Don't inject browser-sync script into WebSocket connections

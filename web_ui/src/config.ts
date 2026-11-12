@@ -4,7 +4,7 @@
  * Host is automatically determined from current page location
  */
 
-export const GAME_SERVER_PORT = 8000;
+export const GAME_SERVER_PORT = 8001;
 
 /**
  * Get game server host - uses current page hostname

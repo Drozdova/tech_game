@@ -3,9 +3,9 @@ Write-Host "Stopping development servers..." -ForegroundColor Yellow
 
 # Our project ports
 $ports = @(
-    5500,  # Browser Sync
+    5501,  # Browser Sync
     3001,  # Browser Sync UI
-    8000   # Python WebSocket server
+    8001   # Python WebSocket server
 )
 
 $killedAny = $false

@@ -27,7 +27,7 @@ class GameEngineClass {
 
   /**
    * Connect to WebSocket server
-   * @param url WebSocket URL (e.g., 'ws://localhost:8000')
+   * @param url WebSocket URL (e.g., 'ws://localhost:8001')
    * @param onConnected Callback when connection is established
    */
   connect(url: string, onConnected: () => void): void {
@@ -47,7 +47,7 @@ class GameEngineClass {
       console.error('WebSocket error connecting to', url, ':', error);
       console.error('Make sure:');
       console.error('1. Server is running and listening on 0.0.0.0 (not localhost)');
-      console.error('2. Firewall allows connections on port 8000');
+      console.error('2. Firewall allows connections on port 8001');
       console.error('3. Server address is correct');
     };
 
