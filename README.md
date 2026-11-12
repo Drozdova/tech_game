@@ -1,270 +1,153 @@
-# Tech Game - Учебный проект с WebSocket
+# Tech Game
 
-Простая игра на Python с веб-интерфейсом. Проект создан для обучения программированию - вся архитектура прозрачна и понятна, без сложных фреймворков.
+Браузерная командная викторина в формате «Своей игры», разработанная на Python и TypeScript. Команды по очереди выбирают категории и вопросы, получают или теряют очки, а после завершения игры видят итоговый рейтинг.
+
+## Возможности
+
+- создание нескольких команд и автоматическая смена хода;
+- категории с уровнями сложности и категории с подкатегориями;
+- загрузка вопросов и вариантов ответов из JSON-файлов;
+- проверка ответов и подсчёт очков;
+- скрытие уже использованных вопросов и категорий;
+- сохранение и восстановление состояния игры;
+- итоговая таблица результатов;
+- работа в браузере через WebSocket;
+- доступ к игре с других устройств в локальной сети;
+- сборка Python-сервера в Windows-приложение с помощью PyInstaller.
+
+## Технологии
+
+- Python 3.10+
+- TypeScript, HTML, CSS
+- WebSocket (`websockets`)
+- JSON
+- Node.js и npm
+- BrowserSync
+- PyInstaller
 
 ## Архитектура
 
 Проект состоит из двух частей:
 
-1. **Backend (Python)** - игровая логика и WebSocket сервер
-2. **Frontend (TypeScript)** - веб-интерфейс в браузере
+1. `game_engine` — игровая логика и WebSocket-сервер на Python.
+2. `web_ui` — пользовательский интерфейс на TypeScript.
 
-Общение между ними происходит через WebSocket с простыми JSON сообщениями.
+Клиент отправляет серверу JSON-сообщения с названием метода и аргументами. Сервер вызывает соответствующий метод класса `Game` и возвращает результат или описание ошибки.
 
 ## Структура проекта
 
-```
+```text
 tech-game/
-├── game_engine/          # Backend на Python
-│   ├── game.py          # Базовый класс Game
-│   ├── dummy_game.py    # Тестовая реализация
-│   ├── app.py           # Event loop обёртка
-│   ├── server.py        # WebSocket сервер
-│   ├── transport.py     # Обработка сообщений
-│   └── requirements.txt # Зависимости Python
-│
-├── web_ui/              # Frontend на TypeScript
-│   ├── src/
-│   │   ├── game_engine.ts       # WebSocket клиент
-│   │   ├── template_manager.ts  # Загрузчик шаблонов
-│   │   ├── elements/
-│   │   │   └── echo_element.ts  # Компонент Echo
-│   │   └── templates/
-│   │       └── echo_test_element.html
-│   ├── static/
-│   │   └── index.css    # Стили
-│   ├── dist/            # Скомпилированный JS
-│   ├── index.html       # Главная страница
-│   ├── index.ts         # Точка входа
-│   ├── package.json
-│   └── tsconfig.json
-│
-└── main.py              # Запуск сервера
+├── game_engine/
+│   ├── resources/game_questions/       # вопросы в формате JSON
+│   ├── app.py                          # цикл асинхронных задач
+│   ├── category_questions_controller.py # загрузка и управление вопросами
+│   ├── game.py                         # игровая логика
+│   ├── main.py                         # создание игры и сервера
+│   ├── server.py                       # WebSocket-сервер
+│   ├── transport.py                    # обработка JSON-сообщений
+│   └── requirements.txt
+├── web_ui/
+│   ├── src/elements/                   # страницы и компоненты интерфейса
+│   ├── src/game_engine.ts              # WebSocket-клиент
+│   ├── static/index.css                # стили
+│   ├── index.html
+│   ├── index.ts
+│   └── package.json
+├── run_server.py                       # запуск Python-сервера
+├── run_game.py                         # точка входа для сборки
+├── build_exe.spec                      # конфигурация PyInstaller
+└── tech-game.code-workspace
 ```
 
 ## Установка
 
-### 1. Установить Python зависимости
+Требуются Python 3.10+, Node.js и npm.
 
-```bash
-pip install -r game_engine/requirements.txt
+### Python
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r game_engine\requirements.txt
 ```
 
-### 2. Установить Node.js зависимости
+### Веб-интерфейс
 
-```bash
+```powershell
 cd web_ui
 npm install
 ```
 
-### 3. Скомпилировать TypeScript
+## Запуск для разработки
 
-```bash
-cd web_ui
-npm run build
-```
+Запустите сервер из корневой папки проекта:
 
-Эта команда скомпилирует все `.ts` файлы в папку `dist/`.
-
-## Запуск
-
-### Запуск Backend (Python сервер)
-
-В корневой папке проекта:
-
-```bash
+```powershell
 python run_server.py
 ```
 
-Или в VS Code просто нажмите **F5** (Run and Debug).
+По умолчанию WebSocket-сервер работает по адресу `ws://localhost:8001`.
 
-Вы увидите:
-```
-Server starting at ws://localhost:8000
-Press Ctrl+C to stop
-Server started at ws://localhost:8000
-```
+Во втором терминале запустите веб-интерфейс:
 
-Сервер работает и ждёт подключений. Для остановки нажмите `Ctrl+C`.
-
-### Запуск Frontend (веб-интерфейс)
-
-1. Откройте папку `web_ui` в VS Code:
-   ```bash
-   cd web_ui
-   code .
-   ```
-
-2. Установите расширение **Live Server** в VS Code (если ещё не установлено)
-
-3. Откройте файл `index.html`
-
-4. Нажмите правой кнопкой мыши и выберите **"Open with Live Server"**
-
-Браузер откроется автоматически на `http://localhost:5500`
-
-## Тестирование
-
-1. Убедитесь, что Python сервер запущен
-2. Откройте веб-интерфейс через Live Server
-3. Вы увидите поле ввода и кнопку "Send"
-4. Введите любой текст и нажмите "Send"
-5. Сервер вернёт "echo: ваш текст"
-
-В консоли Python сервера вы увидите логи:
-```
-Client connected from ('127.0.0.1', 12345)
-Received: {"id":1,"method":"echo","args":["hello"]}
-Sending: {"id":1,"result":"echo: hello","error":null}
-```
-
-## Разработка
-
-### Автоматическая пересборка TypeScript
-
-Вместо `npm run build` можно использовать watch режим:
-
-```bash
+```powershell
 cd web_ui
-npm run watch
+npm run dev
 ```
 
-TypeScript будет автоматически пересобираться при изменении файлов.
+BrowserSync соберёт TypeScript, запустит страницу на `http://localhost:5501` и будет следить за изменениями файлов.
 
-### Структура сообщений
+После изменения Python-кода сервер нужно перезапустить. TypeScript и CSS обновляются автоматически.
 
-Все сообщения между клиентом и сервером - это JSON.
+## Настройки сервера
 
-**Запрос от клиента:**
+Адрес и порт Python-сервера можно задать переменными окружения:
+
+```powershell
+$env:GAME_HOST = "0.0.0.0"
+$env:GAME_PORT = "8001"
+python run_server.py
+```
+
+Для остановки процессов разработки веб-интерфейса выполните:
+
+```powershell
+cd web_ui
+npm run kill
+```
+
+## Вопросы
+
+Вопросы находятся в `game_engine/resources/game_questions`. Обычная категория содержит девять JSON-файлов, а категория с подкатегориями — вложенные папки по три вопроса.
+
+Пример файла вопроса:
+
 ```json
 {
-  "id": 1,
-  "method": "echo",
-  "args": ["hello"]
+  "title": "Какова временная сложность бинарного поиска?",
+  "variants": ["O(n)", "O(log n)", "O(n²)", "O(1)"],
+  "correct_answer": "O(log n)"
 }
 ```
 
-**Ответ от сервера:**
-```json
-{
-  "id": 1,
-  "result": "echo: hello",
-  "error": null
-}
+Стоимость вопроса определяется именем файла, например `100.json` или `900.json`.
+
+## Сборка Windows-приложения
+
+Сначала соберите TypeScript:
+
+```powershell
+cd web_ui
+npm run build
+cd ..
 ```
 
-**Ответ с ошибкой:**
-```json
-{
-  "id": 1,
-  "result": null,
-  "error": "Method not found"
-}
+Затем установите PyInstaller и выполните сборку:
+
+```powershell
+pip install pyinstaller
+pyinstaller build_exe.spec
 ```
 
-## Как добавить новый метод в игру
-
-### 1. Добавить метод в `game.py`
-
-```python
-class Game:
-    def my_method(self, arg1: str, arg2: int) -> str:
-        raise NotImplementedError
-```
-
-### 2. Реализовать в `dummy_game.py`
-
-```python
-class DummyGame(Game):
-    def my_method(self, arg1: str, arg2: int) -> str:
-        return f"Got {arg1} and {arg2}"
-```
-
-### 3. Вызвать из TypeScript
-
-```typescript
-GameEngine.call('my_method', ['hello', 42], (result, error) => {
-  if (error) {
-    console.error(error);
-  } else {
-    console.log(result); // "Got hello and 42"
-  }
-});
-```
-
-Всё! Никакой дополнительной настройки не нужно.
-
-## Как создать новый UI элемент
-
-### 1. Создать HTML шаблон
-
-Создайте файл `web_ui/src/templates/my_element.html`:
-
-```html
-<div class="my-element">
-  <button class="my-button">Click me</button>
-  <div class="my-output"></div>
-</div>
-```
-
-### 2. Создать TypeScript класс
-
-Создайте файл `web_ui/src/elements/my_element.ts`:
-
-```typescript
-import { GameEngine } from '../game_engine.js';
-import { TemplateManager } from '../template_manager.js';
-
-export class MyElement {
-  el: HTMLElement;
-  private button: HTMLButtonElement;
-  private output: HTMLElement;
-
-  constructor() {
-    this.el = TemplateManager.getTemplate('my_element')!;
-    this.button = this.el.querySelector('.my-button')!;
-    this.output = this.el.querySelector('.my-output')!;
-
-    this.button.onclick = () => this.onClick();
-  }
-
-  private onClick(): void {
-    GameEngine.call('my_method', ['test'], (result, error) => {
-      this.output.textContent = error || result;
-    });
-  }
-}
-```
-
-### 3. Использовать в `index.ts`
-
-```typescript
-import { MyElement } from './src/elements/my_element.js';
-
-// В callback после загрузки шаблонов:
-TemplateManager.loadTemplates(['echo_test_element', 'my_element'], () => {
-  const myElement = new MyElement();
-  appContainer.appendChild(myElement.el);
-});
-```
-
-## Принципы проекта
-
-1. **Простота** - никакой магии, всё явно и понятно
-2. **Прозрачность** - можно посмотреть логи и увидеть все сообщения
-3. **Callbacks вместо async/await** - проще для новичков
-4. **Модульность** - каждый компонент независим
-5. **Расширяемость** - легко добавлять новые методы и UI элементы
-
-## Следующие шаги
-
-Теперь можно:
-
-1. Заменить `DummyGame` на настоящую игровую логику
-2. Создать новые UI компоненты
-3. Улучшить стили в `static/index.css`
-4. Добавить новые методы в класс `Game`
-
-Удачи в разработке! 🚀
-
-
+Результат появится в `dist/tech-game/tech-game.exe`.
